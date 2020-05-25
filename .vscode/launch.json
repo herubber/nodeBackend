@@ -1,0 +1,37 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "dist 调试",
+            // "preLaunchTask": "typescript", //调试前 ctrl + shift + b build一次先,冇改代码不用build更快
+            // "preLaunchTask": "tsc: build - tsconfig.json",
+            "program": "${workspaceFolder}/src/app.ts",
+            "cwd": "${workspaceFolder}",
+            "protocol": "inspector",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debugger",
+            "program": "${workspaceFolder}/src/app.ts",
+            "preLaunchTask": "npm: debug",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    ]
+}

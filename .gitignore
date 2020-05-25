@@ -1,0 +1,9 @@
+
+
+node_modules
+dist
+logs
+
+# vscode
+
+package-lock.json
