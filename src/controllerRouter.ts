@@ -4,9 +4,12 @@ import path from 'path'
 import {all, jwtVerify} from './middleware'
 import { ROUTER_MAP, MIDDLEWARE_MAP } from './constant'
 import { RouteMeta } from './type'
-import Router from 'koa-router'
+// import Router from 'koa-router'
 
-export const addControllerRouter = (router: Router) => {
+import koaRouter from "koa-router"
+import { DefaultState, Context } from 'koa';
+
+export const addControllerRouter = (router: koaRouter) => {
   const ctrPath = path.join(__dirname, 'controller');
   const modules: ObjectConstructor[] = [];
   // 扫描controller文件夹，收集所有controller
@@ -19,7 +22,21 @@ export const addControllerRouter = (router: Router) => {
   modules.forEach(m => {
     const routerMap: RouteMeta[] = Reflect.getMetadata(ROUTER_MAP, m, 'method') || [];
     const addMidWareMap:[{name:string, middleName:string, opt:{order:number, args?:any[]}}] = Reflect.getMetadata(MIDDLEWARE_MAP, m, 'method') || [];
+    const prefixMap: any[] = Reflect.getMetadata(ROUTER_MAP, m, 'class') || [];
+
+    // console.log(prefixMap);
+
+
     if (routerMap.length) {
+      // 子路由,存在prefixMap就添加子路由
+      let subrouter
+      if(prefixMap.length){
+        let prefix = prefixMap.sort((m,n)=> m.opt.order - n.opt.order).map(p=>p.path).join('')
+        subrouter = new koaRouter({
+            prefix
+        })
+      }
+
       const ctr = new m();
       routerMap.forEach(route => {
         const { name, method, path, isVerify } = route;
@@ -34,12 +51,27 @@ export const addControllerRouter = (router: Router) => {
             }
           })
 
-        if(isVerify){
-          router[method](path, jwtVerify(isVerify), ...mids, ctr[name]);
+        if(subrouter){
+
+          if(isVerify){
+            subrouter[method](path, jwtVerify(isVerify), ...mids, ctr[name]);
+          }else{
+            subrouter[method](path, ...mids, ctr[name]);
+          }
+          
         }else{
-          router[method](path, ...mids, ctr[name]);
+          if(isVerify){
+            router[method](path, jwtVerify(isVerify), ...mids, ctr[name]);
+          }else{
+            router[method](path, ...mids, ctr[name]);
+          }
         }
-      })
+
+      }) // forEach
+      if(subrouter){
+        router.use(subrouter.routes())
+      }
+
     }
   })
 }

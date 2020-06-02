@@ -61,8 +61,14 @@ export class MySqlGen {
         let whereSqlParam: Array<any> = []
         if(extra?.where){
             if(extra.where.obj){
-                whereSql.push(' ? ')
-                whereSqlParam.push(extra.where.obj)
+                // whereSql.push(' ? ')
+                // whereSqlParam.push(extra.where.obj)
+                let wo = extra.where.obj
+                Object.keys(wo).map(k=>{
+                    whereSql.push('??=?')
+                    whereSqlParam.push(k)
+                    whereSqlParam.push(wo[k])
+                })
             }
             if(extra.where.cdm?.length){
                 extra.where.cdm.forEach(c => {

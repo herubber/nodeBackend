@@ -34,6 +34,23 @@ export function addMidWare(middleName:string, opt?:{/**order小排前面*/order?
 };
 
 
+export function routerMap(path?:string, opt?:{/**order小排前面*/order?:number, args?:any[]}) {
+  return (target: any) => {
+    if(!path){
+      path = '/'+target.name
+    }
+    // const target = proto;
+    const routeMap = Reflect.getMetadata(ROUTER_MAP, target, 'class') || [];
+    opt = opt || {order:0}
+    if(!opt.order){
+      opt.order=0
+    }
+    routeMap.push({ path, opt});
+    Reflect.defineMetadata(ROUTER_MAP, routeMap, target, 'class');
+  };
+};
+
+
 
 
 // 导出 http method 装饰器

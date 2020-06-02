@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import uuid from 'uuid/v1'
 import { Context } from 'koa';
-import { post, get, addMidWare } from '../decorator/controller'
+import { post, get, addMidWare, routerMap } from '../decorator/controller'
 
 import { addUser, verifyUserByPwd } from "@src/dao/user";
 import { redis } from '@src/common/redis';
@@ -21,7 +21,9 @@ const encryptPass = (pass: string, salt: string) => crypto.createHash('md5').upd
 // 	ctx.render('sign.html');
 // };
 
-export default class Sign {
+
+@routerMap()
+export default class Location {
   @addMidWare(midNames.test1, {args:['a','b']})
   @addMidWare(midNames.test3,{order:1})
   @addMidWare(midNames.test2)
@@ -63,34 +65,5 @@ export default class Sign {
     };
   }
 
-  @get('/add')
-  async register (ctx: Context) {
-    const { email, password } = ctx.request.body;
-    const salt = makeSalt();
-    const hash_password = encryptPass(password, salt);
-
-    let usr = {
-      usr:'test', pwd:'123321', code:'test', roleId:9477823074, cnName:'的', 
-      hkName:'德', enName:'🉐', age:22, passport:'93j9f781237412',
-      tel:'131313131313', email:'sd@adfs.com'
-    }
-    const ru = await addUser(usr)
-    // redis.hmset(`user:${ru.id}`, <any>ru)
-
-    ctx.body = ru
-  }
-
-  @get('/get', true)
-  async getToken (ctx: Context) {
-    
-    let id = ctx.state.token.id
-    // let u1 = await redis.hmget(`payload:${id}`,'*')
-    let u1 = await redis.hgetall(`payload:${id}`)
-    let u3 = await ctx.state.token
-    let u2 = await redis.hmget(`user:${id}`,userFieldsArray)
-    let u4 = _.zipObject(userFieldsArray, u2)
-    // redis.expire()
-    ctx.body = {u1, u2, u3, u4}
-  }
 
 }

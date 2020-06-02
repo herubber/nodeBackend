@@ -72,6 +72,7 @@ CREATE or REPLACE TABLE user(
   echelonId BIGINT unsigned COMMENT '梯次id, echelon表id',
   tel varchar(50) COMMENT '联络电话',
   email varchar(50) COMMENT 'e-mail',
+  alCardVerify int default 0 COMMENT '允许刷卡登陆, 0 不允许, 1允许',
   superiorId BIGINT unsigned default 0 COMMENT '上司的id,user表id',
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;

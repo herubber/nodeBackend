@@ -30,5 +30,6 @@ export class user {
     echelonid:any= undefined
     tel:any= undefined
     email:any= undefined
+    alCardVerify?:number = undefined
     superiorId:any= undefined
 }

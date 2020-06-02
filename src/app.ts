@@ -18,11 +18,11 @@ import http from 'http'
 import https from "https";
 
 import { addRouter } from './router/index.js'
-import {addControllerRouter} from "./controllerRouter";
+import { addControllerRouter } from "./controllerRouter";
 // import rediskoa from "ioredis-koa";
 
 import errorHandler from "./middleware/error";
-import {signMethod} from "./middleware/verify";
+import { signMethod } from "./middleware/verify";
 
 import { app as appCfg } from "./config";
 
@@ -50,6 +50,13 @@ const baseDir = path.normalize(__dirname + '/..')
 
 
 const app = new koa()
+
+// app.use(koaSwagger({
+//     // routePrefix: '/swagger', // host at /swagger instead of default /docs
+//     // swaggerOptions: {
+//     //     url: '/swagger.json', // example path to json 其实就是之后swagger-jsdoc生成的文档地址
+//     // },
+// }))
 
 
 
@@ -152,8 +159,10 @@ app.use(cors({
     },
     credentials: true,//将凭证暴露出来, 前端才能获取cookie
     allowMethods: ['GET', 'POST', 'DELETE', 'PUT'],
-    exposeHeaders: ['Authorization'],// 将header字段expose出去，前端才能获取该header字段
-    allowHeaders: ['Content-Type', 'Authorization', 'Accept']// 允许添加到header的字段
+    exposeHeaders: ['*'],// 将header字段expose出去，前端才能获取该header字段
+    // exposeHeaders: ['Authorization'],// 将header字段expose出去，前端才能获取该header字段
+    allowHeaders: ['*']// 允许添加到header的字段
+    // allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'imei']// 允许添加到header的字段
 }));
 
 // app.use(cors({
@@ -179,10 +188,14 @@ app.use(signMethod());
 
 const router = new koaRouter()
 
+
 // add route
 addRouter(router);
 app.use(router.routes()).use(router.allowedMethods());
 addControllerRouter(router);
+
+
+
 
 // deal 404
 app.use(async ctx => {
