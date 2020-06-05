@@ -74,11 +74,14 @@ CREATE or REPLACE TABLE user(
   email varchar(50) COMMENT 'e-mail',
   alCardVerify int default 0 COMMENT '允许刷卡登陆, 0 不允许, 1允许',
   superiorId BIGINT unsigned default 0 COMMENT '上司的id,user表id',
+  lang varchar(50) commnet = 'i18n语言, dict表LANG_TYPE',
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
 -- ALTER TABLE user 
 -- ADD UNIQUE INDEX `usr_unique`(`deleteAt`, `usr`) USING HASH COMMENT '账号不能重复';
+
+INSERT INTO sysdict(catgroy, memo, dict) VALUES('LANG_TYPE', '用户选择的语言', '["cn", "hk"，"en"]' );
 
 CREATE or replace TRIGGER user_usrunique_insertcheck 
 BEFORE INSERT ON user FOR EACH ROW
@@ -93,6 +96,12 @@ BEGIN
     set @message_text = concat('usr must be unique but ', NEW.usr);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
+
+  IF checkindictarr('LANG_TYPE', NEW.lang)!=1 THEN
+    set @message_text = concat('lang must be in LANG_TYPE dict, but value is ', NEW.lang);
+    signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
+  END IF;
+
 END;
 
 
@@ -107,6 +116,10 @@ BEGIN
 			and deleteAt is null
   ) THEN
     set @message_text = concat('usr must be unique but ', NEW.usr);
+    signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
+  END IF;
+  IF checkindictarr('LANG_TYPE', NEW.lang)!=1 THEN
+    set @message_text = concat('lang must be in LANG_TYPE dict, but value is ', NEW.lang);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
 END;
@@ -376,6 +389,9 @@ CREATE or replace TABLE router(
   enName VARCHAR(50) COMMENT '英文姓名',
   routertype varchar(20) COMMENT '路线类型,dist.ROUTE_TYPE,fixed, free',
   frequent json COMMENT '一周的周期,用于app选择巡更路线时过滤不需要巡更的,json[0-6]',
+  startTime TIMESTAMP not null comment '开始时间',
+  endTime TIMESTAMP not null comment '开始时间',
+
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
