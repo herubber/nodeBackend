@@ -43,7 +43,9 @@ const en = require("@src/i18n/en")
 
 const i18n = {cn,hk,en }
 
-export function newErr(err, lang='cn'){
+
+
+export function newErr(err, lang ='cn'){
     let map = i18n[lang]
     return new VError({
         name:   err.name,
