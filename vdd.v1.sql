@@ -74,12 +74,16 @@ CREATE or REPLACE TABLE user(
   email varchar(50) COMMENT 'e-mail',
   alCardVerify int default 0 COMMENT '允许刷卡登陆, 0 不允许, 1允许',
   superiorId BIGINT unsigned default 0 COMMENT '上司的id,user表id',
+  lang varchar(50) commnet = 'i18n语言, dict表LANG_TYPE',
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
 -- ALTER TABLE user 
 -- ADD UNIQUE INDEX `usr_unique`(`deleteAt`, `usr`) USING HASH COMMENT '账号不能重复';
 
+INSERT INTO sysdict(catgroy, memo, dict) VALUES('LANG_TYPE', '用户选择的语言', '["cn","hk","en"]' );
+
+-- 用户唯一、lang 字典约束
 CREATE or replace TRIGGER user_usrunique_insertcheck 
 BEFORE INSERT ON user FOR EACH ROW
 BEGIN
@@ -93,8 +97,13 @@ BEGIN
     set @message_text = concat('usr must be unique but ', NEW.usr);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
-END;
 
+  IF checkindictarr('LANG_TYPE', NEW.lang)!=1 THEN
+    set @message_text = concat('lang must be in LANG_TYPE dict, but value is ', NEW.lang);
+    signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
+  END IF;
+
+END;
 
 CREATE or replace TRIGGER user_usrunique_updatecheck 
 BEFORE UPDATE ON user FOR EACH ROW
@@ -107,6 +116,10 @@ BEGIN
 			and deleteAt is null
   ) THEN
     set @message_text = concat('usr must be unique but ', NEW.usr);
+    signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
+  END IF;
+  IF checkindictarr('LANG_TYPE', NEW.lang)!=1 THEN
+    set @message_text = concat('lang must be in LANG_TYPE dict, but value is ', NEW.lang);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
 END;
@@ -284,6 +297,12 @@ CREATE or replace TABLE pointer(
   beaconIds json COMMENT '对应beacon标签的id,json数组[{id,rssi}]',
   beaconLimit int default 0 COMMENT '在beaconIds最少多少个可以确定',
 
+  routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
+  routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
+  sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
+  minMinute INT default 0 COMMENT '当前点最小到达分钟数',
+  maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
+
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
@@ -376,6 +395,9 @@ CREATE or replace TABLE router(
   enName VARCHAR(50) COMMENT '英文姓名',
   routertype varchar(20) COMMENT '路线类型,dist.ROUTE_TYPE,fixed, free',
   frequent json COMMENT '一周的周期,用于app选择巡更路线时过滤不需要巡更的,json[0-6]',
+  startTime TIMESTAMP not null comment '开始时间',
+  endTime TIMESTAMP not null comment '开始时间',
+
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
@@ -397,34 +419,34 @@ BEGIN
   END IF;
 END;
 
-# 固定路线,由多个pointer构成
-CREATE or replace TABLE routerpoint(
-  id BIGINT unsigned default(uuid_short()) COMMENT '主键',
-  insertAt timestamp DEFAULT(CURRENT_TIMESTAMP) INVISIBLE COMMENT '新增时间',
-  updateAt timestamp NULL ON UPDATE CURRENT_TIMESTAMP INVISIBLE COMMENT '更新时间',
-  deleteAt timestamp NULL INVISIBLE COMMENT '删除时间',
-  insertBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '新增人,user表id,0 代表系统操作或数据库直接操作',
-  updateBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '更新人,user表id,0 代表系统操作或数据库直接操作',
-  deleteBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '删除人,user表id,0 代表系统操作或数据库直接操作',
-  insertByCode varchar(50) INVISIBLE COMMENT '冗余,新增人,user表code',
-  updateByCode varchar(50) INVISIBLE COMMENT '冗余,更新人,user表code',
-  deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
-  memo varchar(200) COMMENT '备注',
-  state int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结',
+-- # 固定路线,由多个pointer构成
+-- CREATE or replace TABLE routerpoint(
+--   id BIGINT unsigned default(uuid_short()) COMMENT '主键',
+--   insertAt timestamp DEFAULT(CURRENT_TIMESTAMP) INVISIBLE COMMENT '新增时间',
+--   updateAt timestamp NULL ON UPDATE CURRENT_TIMESTAMP INVISIBLE COMMENT '更新时间',
+--   deleteAt timestamp NULL INVISIBLE COMMENT '删除时间',
+--   insertBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '新增人,user表id,0 代表系统操作或数据库直接操作',
+--   updateBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '更新人,user表id,0 代表系统操作或数据库直接操作',
+--   deleteBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '删除人,user表id,0 代表系统操作或数据库直接操作',
+--   insertByCode varchar(50) INVISIBLE COMMENT '冗余,新增人,user表code',
+--   updateByCode varchar(50) INVISIBLE COMMENT '冗余,更新人,user表code',
+--   deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
+--   memo varchar(200) COMMENT '备注',
+--   state int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结',
 
-  orgId BIGINT UNSIGNED COMMENT '冗余,机构id,对应org表id',
-  orgCode varchar(50) COMMENT '冗余, 机构code,对应org表code',
-  routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
-  routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
-  pointerId BIGINT UNSIGNED COMMENT '地标,点的id,对应pointer表id',
-  pointerCode varchar(50) COMMENT '冗余, 地标code,对应pointer表code',
+--   orgId BIGINT UNSIGNED COMMENT '冗余,机构id,对应org表id',
+--   orgCode varchar(50) COMMENT '冗余, 机构code,对应org表code',
+--   routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
+--   routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
+--   pointerId BIGINT UNSIGNED COMMENT '地标,点的id,对应pointer表id',
+--   pointerCode varchar(50) COMMENT '冗余, 地标code,对应pointer表code',
   	
-  sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
-  minMinute INT default 0 COMMENT '当前点最小到达分钟数',
-  maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
+--   sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
+--   minMinute INT default 0 COMMENT '当前点最小到达分钟数',
+--   maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
   	
-  PRIMARY KEY (id)
-) ENGINE = InnoDB CHARACTER SET = utf8mb4;
+--   PRIMARY KEY (id)
+-- ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
 
 

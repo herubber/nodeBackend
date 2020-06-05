@@ -22,28 +22,27 @@ const encryptPass = (pass: string, salt: string) => crypto.createHash('md5').upd
 // };
 
 export default class Sign {
-  @addMidWare(midNames.test1, {args:['a','b']})
-  @addMidWare(midNames.test3,{order:1})
+  @addMidWare(midNames.test1, { args: ['a', 'b'] })
+  @addMidWare(midNames.test3, { order: 1 })
   @addMidWare(midNames.test2)
   @post('/login')
-  async login (ctx: Context) {
+  async login(ctx: Context) {
     let { usr, pwd, cardId } = ctx.request.body;
     let imei = ctx.header.imei
-    let users:any[] = []
-    if(usr && pwd){
+    let users: any[] = []
+    if (usr && pwd) {
       users = await verifyUserByPwd(usr, pwd)
-    } else if(cardId && imei){
+    } else if (cardId && imei) {
       //刷卡登陆, 必须 imei 提供
       const dao = new Dao()
-      const ret = await dao.listNormal(user.name, ['*'],{
-          where:{
-              obj:{cardId, alCardVerify:1},
-          }
+      const ret = await dao.listNormal(user.name, ['*'], {
+        where: {
+          obj: { cardId, alCardVerify: 1 },
+        }
       })
       users = ret.data
-    } else{
+    } else {
       throw newErr(errConst.apiParamsErr)
-
     }
 
     if (!users.length) {
@@ -51,28 +50,28 @@ export default class Sign {
     }
     // const users = await dao.getUser({ email });
     let lgUsr = users[0]
-    let payload = _.pick(lgUsr,payloadFieldsArray ) as Payload
+    let payload = _.pick(lgUsr, payloadFieldsArray) as Payload
 
     let token = ctx.jwtSign(payload);
-    redis.hmset(`user:${lgUsr.id}`, {...lgUsr, token})
-    lgUsr = _.omit(lgUsr,['pwd'])
+    redis.hmset(`user:${lgUsr.id}`, { ...lgUsr, token })
+    lgUsr = _.omit(lgUsr, ['pwd'])
     return ctx.body = {
       code: 0,
-      msg: '登录成功',
+      msg: '登录成功1',
       data: lgUsr
     };
   }
 
   @get('/add')
-  async register (ctx: Context) {
+  async register(ctx: Context) {
     const { email, password } = ctx.request.body;
     const salt = makeSalt();
     const hash_password = encryptPass(password, salt);
 
     let usr = {
-      usr:'test', pwd:'123321', code:'test', roleId:9477823074, cnName:'的', 
-      hkName:'德', enName:'🉐', age:22, passport:'93j9f781237412',
-      tel:'131313131313', email:'sd@adfs.com'
+      usr: 'test', pwd: '123321', code: 'test', roleId: 9477823074, cnName: '的',
+      hkName: '德', enName: '🉐', age: 22, passport: '93j9f781237412',
+      tel: '131313131313', email: 'sd@adfs.com'
     }
     const ru = await addUser(usr)
     // redis.hmset(`user:${ru.id}`, <any>ru)
@@ -81,16 +80,16 @@ export default class Sign {
   }
 
   @get('/get', true)
-  async getToken (ctx: Context) {
-    
+  async getToken(ctx: Context) {
+
     let id = ctx.state.token.id
     // let u1 = await redis.hmget(`payload:${id}`,'*')
     let u1 = await redis.hgetall(`payload:${id}`)
     let u3 = await ctx.state.token
-    let u2 = await redis.hmget(`user:${id}`,userFieldsArray)
+    let u2 = await redis.hmget(`user:${id}`, userFieldsArray)
     let u4 = _.zipObject(userFieldsArray, u2)
     // redis.expire()
-    ctx.body = {u1, u2, u3, u4}
+    ctx.body = { u1, u2, u3, u4 }
   }
 
 }
