@@ -608,7 +608,7 @@ CREATE or replace TABLE device(
   deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
   memo varchar(200) COMMENT '备注',
 
-  orgId BIGINT UNSIGNED COMMENT '机构id,对应org表id',
+  orgId json COMMENT '机构id,对应org表id',
   orgCode varchar(50) COMMENT '冗余, 机构code,对应org表code',
   # routerId BIGINT UNSIGNED COMMENT '冗余路线id,对应router表id',
   # routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
