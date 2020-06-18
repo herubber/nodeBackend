@@ -7,8 +7,8 @@ import { signMethod, jwtVerify, scodeVerify } from "./verify";
 
 
 const test1 = (...args)=>async (ctx, next)=>{
-    console.log('test1',args);
     await next()
+    console.log('test1',args);
 }
 const test2 = (...args)=>async (ctx, next)=>{
     console.log('test2',args);
