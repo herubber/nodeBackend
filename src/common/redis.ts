@@ -7,7 +7,7 @@ import Redis from "ioredis";
 
 export const redis = new Redis({
     port: 6379, // Redis port
-    host: "192.168.0.116", // Redis host
+    host: "192.168.0.132", // Redis host
     family: 4, // 4 (IPv4) or 6 (IPv6)
     // password: "auth",
     db: 0,

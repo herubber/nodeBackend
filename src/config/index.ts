@@ -23,7 +23,7 @@ if (instance) {
 export const mariadbPoolCfg = {
     acquireTimeout: 10000, //    Timeout to get a new connection from pool in ms.
     connectionLimit: 10,
-    host: '192.168.0.116',
+    host: '192.168.0.132',
     user: 'root',
     port: 3306,
     compress: true,
@@ -40,7 +40,7 @@ export const mariadbPoolCfg = {
 export const mysqlPoolCfg: PoolConfig = {
     acquireTimeout:10000,
     connectionLimit: 10,
-    host: "192.168.0.116",
+    host: "192.168.0.132",
     user: "root",
     port: 3306,
     password: "123321",
