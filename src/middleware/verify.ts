@@ -10,17 +10,19 @@ import { Next, Context } from 'koa';
 
 import * as _ from "lodash";
 import { Payload } from '@src/models/payload';
+
 const ms = require('ms')
+
 
 export const signMethod = () =>async(ctx, next:Next) => {
   ctx.jwtSign = (payload: Payload, exp?: number|string) => {
     exp =  exp || app.exp
     if (typeof exp === 'string'){
-      exp = ms(exp)
+      exp = Math.ceil(ms(exp) / 1000)
     }
     const token = jsonWebToken.sign(payload, app.secret, { expiresIn: exp });
     redis.hmset(`payload:${payload.id}`, <any>{...payload, token})
-    redis.expire(`payload:${payload.id}`, Math.ceil(<number>exp/1000))
+    redis.expire(`payload:${payload.id}`, Math.ceil(<number>exp))
     ctx.set('Authorization', token);
     return token
   };
