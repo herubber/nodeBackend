@@ -393,7 +393,7 @@ CREATE or replace TABLE router(
   cnName VARCHAR(50) COMMENT '简体姓名',
   hkName VARCHAR(50) COMMENT '繁体姓名',
   enName VARCHAR(50) COMMENT '英文姓名',
-  routertype varchar(20) COMMENT '路线类型,dist.ROUTE_TYPE,fixed, free',
+  routerType varchar(20) COMMENT '路线类型,dist.ROUTE_TYPE,fixed, free',
   frequent json COMMENT '一周的周期,用于app选择巡更路线时过滤不需要巡更的,json[0-6]',
   startTime TIMESTAMP not null comment '开始时间',
   endTime TIMESTAMP not null comment '开始时间',
@@ -404,8 +404,8 @@ CREATE or replace TABLE router(
 CREATE or replace TRIGGER router_routertype_insertcheck 
 BEFORE INSERT ON tag FOR EACH ROW
 BEGIN
-  IF checkindictarr('ROUTE_TYPE', NEW.routertype)!=1 THEN
-    set @message_text = concat('routertype must be in ROUTE_TYPE dict, but value is ', NEW.routertype);
+  IF checkindictarr('ROUTE_TYPE', NEW.routerType)!=1 THEN
+    set @message_text = concat('routerType must be in ROUTE_TYPE dict, but value is ', NEW.routerType);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
 END;
@@ -413,8 +413,8 @@ END;
 CREATE or replace TRIGGER router_routertype_updatecheck 
 BEFORE UPDATE ON tag FOR EACH ROW
 BEGIN
-  IF checkindictarr('ROUTE_TYPE', NEW.routertype)!=1 THEN
-    set @message_text = concat('routertype must be in ROUTE_TYPE dict, but value is ', NEW.routertype);
+  IF checkindictarr('ROUTE_TYPE', NEW.routerType)!=1 THEN
+    set @message_text = concat('routertype must be in ROUTE_TYPE dict, but value is ', NEW.routerType);
     signal sqlstate '45000' set MESSAGE_TEXT = @message_text;
   END IF;
 END;
@@ -473,6 +473,7 @@ CREATE or replace TABLE patrolaction(
   endTime timestamp COMMENT '巡更结束时间',
   situation json COMMENT '状况总结,dict.PATROL_SITUATION,json[skip, fast, slow]',
 
+  userId BIGINT UNSIGNED COMMENT '哪个user的巡逻,对应user表id',
   imei varchar(50) COMMENT 'imei号',
   sim varchar(50) COMMENT 'sim号码',
   ipAddr varchar(50) COMMENT 'ip',
@@ -765,6 +766,10 @@ create or replace table sos(
 
 
 
+
+#2020-09-03
+ALTER TABLE `ipatrol`.`patrolaction` 
+ADD COLUMN `userId` bigint(20) NULL COMMENT '哪个user的巡逻,对应user表id' AFTER `situation`;
 
 
 # 报表订阅,先研究下 jasperreport 看看需要什么参数字段等
