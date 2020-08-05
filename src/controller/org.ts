@@ -9,7 +9,7 @@ import { post, get, addMidWare } from '../decorator/controller'
 
 export default class Sign {
 
-    @get('/test')
+    @get('/test',true)
     async addOrg(ctx: Context){
 
         ctx.response.body = {
