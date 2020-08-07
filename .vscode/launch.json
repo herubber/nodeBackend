@@ -19,6 +19,31 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        },{
+            "type": "node",
+            "request": "launch",
+            "name": "hot debug",
+            "cwd": "${workspaceFolder}",
+            "protocol": "inspector",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "hotdebug"],
+            "restart": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            
+        },{
+            "type": "node",
+            "request": "launch",
+            "name": "nodemon",
+            "cwd": "${workspaceFolder}",
+            "protocol": "inspector",
+            // "runtimeExecutable": "nodemon",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run-script", "nodemon"],
+            "restart": true,
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "program": "${workspaceFolder}/src/app.ts",
         },
         {
             "type": "node",

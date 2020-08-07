@@ -1,5 +1,5 @@
 import * as pmysql from 'promise-mysql'
-import { SqlExtra } from '@src/type'
+import { SqlExtra, UseJoin } from '@src/type'
 import { conditionRelation } from "@src/constant";
 import _ from 'lodash';
 import { getPoolp } from '@src/common/mysql';
@@ -139,4 +139,21 @@ export class Dao {
     }
 
 
+
+
+    
+
 }
+
+
+
+
+// let u: UseJoin = ['234',{
+//     $join:{
+//         a:'3'
+//     }
+// },{
+//     $leftJoin:{
+//         a:'3'
+//     }
+// }]

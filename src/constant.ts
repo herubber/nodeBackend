@@ -15,6 +15,8 @@ export class ConditionRelation {
     lte = '<='
     is = 'is'
     isn = 'is not'
+    between = 'between'
+    like = 'like'
 }
 
 export const conditionRelation = new ConditionRelation()

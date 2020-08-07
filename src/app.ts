@@ -27,6 +27,7 @@ import { signMethod } from "./middleware/verify";
 import { app as appCfg } from "./config";
 
 
+console.log(123454321);
 process.on('uncaughtException', err => {
     console.error('An uncaught error occurred!');
     //console.error(err.stack);

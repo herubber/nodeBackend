@@ -63,3 +63,20 @@ export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>
 }
 
 
+
+
+
+// angular 源码 定义 class 接口 是继承 一个 Function
+export interface Type<T> extends Function { new (...args: any[]): T; }
+
+function create<T>(clazz: Type<T>): T {
+    let ret = new clazz();
+    return ret
+}
+class A {
+    public static attribute = "ABC";
+    public k = 3
+}
+let a = create(A);
+a.k
+

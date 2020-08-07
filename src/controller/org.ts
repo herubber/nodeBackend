@@ -5,16 +5,15 @@ import { Context } from "koa";
 
 import { post, get, addMidWare } from '../decorator/controller'
 
-
-
 export default class Sign {
 
-    @get('/test',true)
+    @get('/test')
     async addOrg(ctx: Context){
 
         ctx.response.body = {
             foo : 'hello',
-            bar : 'world'
+            bar : 'world',
+            t:4
         }
         
     }

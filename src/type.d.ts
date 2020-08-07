@@ -34,7 +34,7 @@ export declare interface CondictionModel{
     p:string
 
     /**参数值 */
-    v:any
+    v:any|any[]
 
     /**函数名,如果有需要 */
     f?:string
@@ -43,6 +43,27 @@ export declare interface CondictionModel{
     r?: keyof ConditionRelation
 
 }
+
+
+/**
+ * where 扩展块, 应该用 抽象多种表达式类型
+ */
+export declare interface WhereBlock{
+  /**
+   * 简单的field=value可以直接用obj对象传入
+   */
+  obj?:any,
+  /**
+   * 简单的条件表达式模型
+   */
+  cdm?:Array<CondictionModel>,
+  /**
+   * 字符串方式
+   */
+  rawWhere?:string
+}
+
+
 
 export declare interface SqlExtra{
   returning?:string,
@@ -54,11 +75,7 @@ export declare interface SqlExtra{
     invisibleField?:Array<string>,
     rawSelect?:string
   },
-  where?:{
-    obj?:any,
-    cdm?:Array<CondictionModel>,
-    rawWhere?:string
-  },
+  where?:WhereBlock,
   order?:{
     desc?:boolean,
     rawOrder:string[],
@@ -66,6 +83,9 @@ export declare interface SqlExtra{
   pagin?:{
     pagesize:number,
     page:number,
+  },
+  groupBy?:{
+    rawGroupBy:string[]
   }
 }
 
@@ -91,6 +111,58 @@ type RouteMeta = {
 }
 
 type MiddleWare = (...arg: any[]) => (ctx: Context, next?: Next) => Promise<void>;
+
+declare interface ExpressionSite{
+  fn?:string,
+  p:Array<string|ExpressionSite|any>,
+}
+
+/**
+ * 表达式, 灵感于 .net fx 表达式/树模型, 这里设置没有用表达式书组成, 用到只能自己写sql了
+ * 后面有空的就重构 构建者模式的设计,可以补充更复杂的嵌套sql
+ */
+declare interface ExpressionModel{
+  /**
+   * 表达式左边
+   */
+  left:{
+      fn:string,
+      p:any|any[],
+  },
+  /**
+   * 表达式右边
+   * 暂时想到between关系表达式右边带2个,所以可以是数组
+   */
+  right:{
+    fn:string,
+    p:any|any[],
+  }|Array<{
+    fn:string,
+    p:any|any[],
+  }>,
+  /**
+   * 暂时想到between关系表达式右边带2个
+   */
+  /**
+   * 关系
+   */
+  relate:keyof ConditionRelation
+}
+
+type joinType = '$join'|'$left'|'$right'
+export declare interface JoinModel{
+  tb:string,
+  as?:string,
+  on:Array<string|ExpressionModel>
+}
+
+type $join = {$join:JoinModel}
+type $leftJoin = {$leftJoin:JoinModel}
+type $rightJoin = {$rightJoin:JoinModel}
+
+declare type join = $join|$leftJoin|$rightJoin
+
+export declare type UseJoin = Array<string|join>
 
 export {
   // ResData,
