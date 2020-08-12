@@ -53,7 +53,14 @@ export default class Sign {
     let payload = _.pick(lgUsr, payloadFieldsArray) as Payload
 
     let token = ctx.jwtSign(payload);
+
     redis.hmset(`user:${lgUsr.id}`, { ...lgUsr, token })
+
+    // var bbb = userFieldsArray;
+    // var aaa = await redis.hmget(`user:${lgUsr.id}`, userFieldsArray)
+    // var ccc = await redis.hget(`user:${lgUsr.id}`, 'id');
+
+
     lgUsr = _.omit(lgUsr, ['pwd'])
     return ctx.body = {
       code: 0,

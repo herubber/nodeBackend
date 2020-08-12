@@ -7,10 +7,10 @@ const errorHandler = () => async (ctx, next) => {
     log.error(err);
     let obj = {
       code: -1,
-      msg: 'System Error',
+      msg: err.message,
     };
     if (ctx.app.env === 'development') {
-      obj.msg = err.message;
+      // obj.msg = err.message;
       (<any>obj).err = err;
     }
     ctx.body = obj

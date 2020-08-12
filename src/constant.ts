@@ -50,5 +50,5 @@ export function newErr(err, lang ='cn'){
     return new VError({
         name:   err.name,
         info: err,
-      },map[lang])
+      },map[err.name])
 }

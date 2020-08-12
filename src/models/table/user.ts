@@ -32,4 +32,5 @@ export class user {
     email:any= undefined
     alCardVerify?:number = undefined
     superiorId:any= undefined
+    lang:any= undefined
 }
