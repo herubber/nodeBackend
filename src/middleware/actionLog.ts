@@ -5,9 +5,9 @@ import { Context, Next } from "koa";
 // import { syslog } from "@src/dao/models/table/syslog";
 
 export const actionLog = () => async (ctx:Context, next:Next) => {
-    let ip = ctx.request.ip || ctx.request.headers[app.proxyIpHeaderKey] || 
+    let ip = ctx.request.headers[app.proxyIpHeaderKey] || 
         ctx.request.headers['x-forwarded-for'] || 
-        ctx.request.headers['x-real-ip'] || ctx.request.headers["X-Orig-IP"];
+        ctx.request.headers['x-real-ip'] || ctx.request.headers["X-Orig-IP"] || ctx.request.ip;
     
     // 这里因应verify中间件的选择,现在做到一半确认使用 jwt ,就这么写咯,要做好产品,应该在config里设定
     let token = ctx.header.authorization
@@ -24,7 +24,7 @@ export const actionLog = () => async (ctx:Context, next:Next) => {
         action:ctx.path,
         // msg:ctx.body // 可以放参数等信息
     })
-
+    await next()
 };
 
 

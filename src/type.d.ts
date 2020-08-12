@@ -146,19 +146,19 @@ export declare interface ExpressionModel{
   /**
    * 表达式左边
    */
-  left:ExpressionSite,
+  lt:ExpressionSite,
   /**
    * 表达式右边
    * 暂时想到between关系表达式右边带2个,所以可以是数组
    */
-  right?:ExpressionSite|Array<ExpressionSite>,
+  rt?:ExpressionSite|Array<ExpressionSite>,
   /**
    * 暂时想到between关系表达式右边带2个
    */
   /**
    * 关系
    */
-  relate?:keyof ConditionRelation
+  r?:keyof ConditionRelation
 }
 
 type joinType = '$join'|'$left'|'$right'

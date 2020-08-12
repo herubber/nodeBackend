@@ -7,12 +7,14 @@ import { Dao } from "./dao";
 export async function addUser(_userObj:Partial<user>){
     const dao = new Dao()
     let userObj = _.omit(_userObj, ['pwd']) as Partial<user>
-    let u = await dao.insertIgnorNullValue(user.name, userObj, { 
+    let u = await dao.addInv(user.name, userObj, { 
         set:{
             cdm:[{
-                p:'pwd',
-                v:_userObj.pwd,
-                f:'password'
+                lt:{p:'$pwd',},
+                rt:{
+                    fn:'password',
+                    p:_userObj.pwd
+                }
             }],
         },
         returning:'*'
@@ -25,7 +27,7 @@ export async function addUser(_userObj:Partial<user>){
     //     const dao = new Dao(conn)
     //     let u = await dao.insertIgnorNullValue(user.name, userObj, { set:{
     //         cdm:[{
-    //             p:'pwd',
+    //             p:'$pwd',
     //             v:_userObj.pwd,
     //             f:'password'
     //         }]
@@ -38,23 +40,21 @@ export async function addUser(_userObj:Partial<user>){
 
 export async function getUserById(id: string){
     const dao = new Dao()
-    const ret = await dao.listNormal(user.name, ['*'],{
-        where:{
-            obj:{id}
-        }
-    })
-    return ret.data
+    const ret = await dao.getById(user.name, id)
+    return ret
 }
 
 export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>{
     const dao = new Dao()
-    const ret = await dao.listNormal(user.name, ['*'],{
+    const ret = await dao.listWsd(user.name, ['*'],{
         where:{
             obj:{usr},
             cdm:[{
-                p:'pwd',
-                v:pwd,
-                f:'password'
+                lt:{p:'$pwd'},
+                rt:{
+                    p:pwd,
+                    fn:'password'
+                }
             }]
         }
     })

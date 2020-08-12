@@ -5,6 +5,5 @@ import { Dao } from "./dao";
 
 export async function addLog(obj:Partial<syslog>){
     const dao = new Dao()
-    let u = await dao.insertValue(syslog.name, obj)
-    return u.data
+    await dao.addInv(syslog.name, obj)
 }

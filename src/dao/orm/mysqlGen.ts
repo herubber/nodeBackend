@@ -117,7 +117,7 @@ ${paginSql}`
 
         siteMap.forEach(s => {
             // 如果参数是表达式,如果你看到这行的注释,就完善下面实现吧
-            if(s.p.left){
+            if(s.p?.left){
                 throw new vError({
                     name: 'noimplimentation',
                     info:{code:0, }
@@ -182,54 +182,54 @@ ${paginSql}`
      */
     public static buildExpressionModel(c:ExpressionModel){
         let [sql, params] = ['',<any[]>[]]
-        global.GLOBAL
+
         // 左边必须有
-        let [ls,lp] = this.buildSite(c.left)
-        ls[0]
+        let [ls,lp] = this.buildSite(c.lt)
+
         params.push(...lp)
 
         // 右边看关系
-        if(c.relate == conditionRelation.between){
+        if(c.r == conditionRelation.between){
             // between 必须是2个右边
-            this.checkSqlSiteAndThrowError(Array.isArray(c.right) && c.right.length==2)
+            this.checkSqlSiteAndThrowError(Array.isArray(c.rt) && c.rt.length==2)
             
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate} ${rs.join(' and ')}`
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r} ${rs.join(' and ')}`
             params.push(...rp)
-        } else if(c.relate == conditionRelation.startLike){
+        } else if(c.r == conditionRelation.startLike){
             // like 只有一个右边,一定是rs[0]
-            this.checkSqlSiteAndThrowError( (!Array.isArray(c.right)) ||(Array.isArray(c.right) && c.right.length==1))
+            this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length==1))
             
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate} concat(${rs[0]},'%')`
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r} concat(${rs[0]},'%')`
             params.push(...rp)
-        } else if(c.relate == conditionRelation.endLike){
+        } else if(c.r == conditionRelation.endLike){
             // like 只有一个右边,一定是rs[0]
-            this.checkSqlSiteAndThrowError( (!Array.isArray(c.right)) ||(Array.isArray(c.right) && c.right.length==1))
+            this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length==1))
 
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate} concat('%',${rs[0]})`
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r} concat('%',${rs[0]})`
             params.push(...rp)
-        } else if(c.relate == conditionRelation.like){
+        } else if(c.r == conditionRelation.like){
             // like 只有一个右边,一定是rs[0]
-            this.checkSqlSiteAndThrowError( (!Array.isArray(c.right)) ||(Array.isArray(c.right) && c.right.length==1))
+            this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length==1))
             
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate} concat('%',${rs[0]},'%')`
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r} concat('%',${rs[0]},'%')`
             params.push(...rp)
-        } else if(c.relate == conditionRelation.in){
+        } else if(c.r == conditionRelation.in){
             // in 必须超过一个右边
-            this.checkSqlSiteAndThrowError( (!Array.isArray(c.right)) ||(Array.isArray(c.right) && c.right.length>0))
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate} ${rs.join(',')}`
+            this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length>0))
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r} ${rs.join(',')}`
             params.push(...rp)
-        } else if(!c.right || (<[]>c.right).length==0){
+        } else if(!c.rt || (<[]>c.rt).length==0){
             // 没关系就没右边
         } else{
             // 普通关系表达式,左右都1个
-            this.checkSqlSiteAndThrowError( (!Array.isArray(c.right)) ||(Array.isArray(c.right) && c.right.length==1))
-            let [rs,rp] = this.buildSite(c.right)
-            sql = `${ls[0]} ${c.relate||conditionRelation.eq} ${rs[0]}`
+            this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length==1))
+            let [rs,rp] = this.buildSite(c.rt)
+            sql = `${ls[0]} ${c.r||conditionRelation.eq} ${rs[0]}`
             params.push(...rp)
         }
         return [sql, params]
@@ -271,16 +271,15 @@ ${paginSql}`
                 sqlStr += gpSql
                 params.push(...gpParams)
             }else{
-                if(cdm.link){
-                    let [emSql,emParams] = this.buildExpressionModel(cdm)
-                    if (idx==0) {
-                        // 第一个ExpressionModel的link放到括号左边
-                        sqlStr += `${(<ExpressionModel>cdms[0]).link} (${emSql} `
-                    } else {
-                        sqlStr += `${(<ExpressionModel>cdms[0]).link} ${emSql} `
-                    }
-                    params.push(emParams)
+                
+                let [emSql,emParams] = this.buildExpressionModel(cdm)
+                if (idx==0) {
+                    // 第一个ExpressionModel的link放到括号左边
+                    sqlStr += `${cdm.link||''} (${emSql} `
+                } else {
+                    sqlStr += `${cdm.link||'and'} ${emSql} `
                 }
+                params.push(...emParams)
             }
         })
 
@@ -306,18 +305,20 @@ ${paginSql}`
         if(link.obj){
             // linkSql.push(' ? ')
             // linkSqlParam.push(extra.where.obj)
-            let wo = link.obj
-            Object.keys(wo).map(k=>{
-                linkSql.push('??=?')
-                linkSqlParam.push(k)
-                linkSqlParam.push(wo[k])
-            })
+            // let wo = link.obj
+            // Object.keys(wo).map(k=>{
+            //     linkSql.push('??=?')
+            //     linkSqlParam.push(k)
+            //     linkSqlParam.push(wo[k])
+            // })
+            linkSql.push('?')
+            linkSqlParam.push(link.obj)
         }
         // 处理条件模型表达式
         if(link.cdm){
             let [cdmSql, cdmParam] = this.buildExpressionGroup(link.cdm)
-            linkSql.push(...cdmSql)
-            linkSqlParam.push(cdmParam)
+            linkSql.push(<string>cdmSql)
+            linkSqlParam.push(...cdmParam)
         }
         // 处理 简单条件表达式,可带一个函数且函数只传一个值
         // where.cdm?.forEach(c => {
@@ -505,12 +506,10 @@ ${paginSql}`
         if(extra?.select?.rawSelect){
             selSql.push(extra.select.rawSelect)
         }
-        
 
         let [whereSqlStr, whereSqlParam] = this.buildLink(extra?.where)
         let sql = `select ${selSql.join(',')}
-${fromSql}
-where ${whereSqlStr}`
+${fromSql}where ${whereSqlStr}`
         // ${orderSql}
         // ${paginSql}
         

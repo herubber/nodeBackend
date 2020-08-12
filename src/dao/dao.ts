@@ -103,7 +103,7 @@ export class Dao {
         let {sql, params} = this.sqlGen.genUpdate(tbName, obj, extra)
         let conn = await this.getConn()
         let [data, fields, query] = await conn.query(sql, params)
-        return data
+        return data.affectedRows
     }
 
     /**
@@ -170,17 +170,18 @@ export class Dao {
 
     /**
      * 假删除的数据不查询
+     * list Without soft delete
      * @param tbName 表名
      * @param field 字段列表
      * @param extra 扩展查询
      */
-    async listWitoutSoftDelete(tbName: String|UseJoin, field: Array<string>, extra?: SqlExtra): Promise<{ data, cnt:number }> {
+    async listWsd(tbName: String|UseJoin, field: Array<string>=['*'], extra?: SqlExtra): Promise<{ data, cnt:number }> {
         extra = _.mergeWith(extra, {
             where:{
                 cdm:[{
-                    p:'deleteAt',
-                    v:null,
-                    r:'is'
+                    lt:{p:'$deleteAt'},
+                    r:'is',
+                    rt:{p:null},
                 }]
             }
         }, (o,s)=>{
