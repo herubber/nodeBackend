@@ -7,6 +7,7 @@ export const MIDDLEWARE_MAP = Symbol('MIDDLEWARE_MAP');
 
 /** 关系 左右2边, 以后用到其他再补充完善 */
 export class ConditionRelation {
+    // 关系表达式有且仅有左和右
     eq = '='
     ne = '<>'
     gt = '>'
@@ -15,6 +16,14 @@ export class ConditionRelation {
     lte = '<='
     is = 'is'
     isn = 'is not'
+    // 特殊,2右
+    between = 'between'
+    // 特殊,右加%
+    like = 'like'
+    startLike = 'like'
+    endLike = 'like'
+    'in' = 'in'
+    // 如果后面有特殊需要添加,修改gen对应buildCondition方法
 }
 
 export const conditionRelation = new ConditionRelation()

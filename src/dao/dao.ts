@@ -1,5 +1,5 @@
 import * as pmysql from 'promise-mysql'
-import { SqlExtra } from '@src/type'
+import { SqlExtra, UseJoin } from '@src/type'
 import { conditionRelation } from "@src/constant";
 import _ from 'lodash';
 import { getPoolp } from '@src/common/mysql';
@@ -62,7 +62,13 @@ export class Dao {
         return relRet
     }
     
-    async insertValue<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
+    /**
+     * insert 
+     * @param tbName 
+     * @param obj 
+     * @param extra 
+     */
+    async add<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
         if (!tbName) {
             throw 'tbName必须提供'
         }
@@ -78,17 +84,65 @@ export class Dao {
         return { data, fields, query }
     }
 
-    async insertIgnorNullValue<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
+    /**
+     * insert by object ignor nil value
+     * @param tbName 
+     * @param obj 
+     * @param extra 
+     */
+    async addInv<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
         // _.isObject(objs) && (objs=[objs])
         // let insObjs = objs.map(obj => _.omitBy(obj, o=>_.isNil(o)));
         const insObj = _.omitBy(obj, o => _.isNil(o)) as Partial<T>
-        let ret = await this.insertValue(tbName, insObj, extra)
+        let ret = await this.add(tbName, insObj, extra)
         return ret
+    }
+
+    
+    async update<T>(tbName: String, obj?: Partial<T>, extra?:SqlExtra){
+        let {sql, params} = this.sqlGen.genUpdate(tbName, obj, extra)
+        let conn = await this.getConn()
+        let [data, fields, query] = await conn.query(sql, params)
+        return data.affectedRows
+    }
+
+    /**
+     * update by object ignor nil value
+     * @param tbName 
+     * @param obj 
+     * @param extra 
+     */
+    async updateInv<T>(tbName: String, obj?: Partial<T>, extra?:SqlExtra){
+        const updObj = _.omitBy(obj, o => _.isNil(o)) as Partial<T>
+        let ret = await this.update(tbName, updObj, extra)
+        return ret
+    }
+
+    
+    async getById(tbName: String, id:string, field:Array<string>=['*'],showExtraField=false){
+        let {sql, params} = this.sqlGen.genGetById(tbName,id,field,showExtraField)
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data
+    }
+
+    async getBy(tbName: String, obj:any, field:Array<string>=['*'],showExtraField=false){
+        let {sql, params} = this.sqlGen.genGetByWhereObj(tbName,obj,field,showExtraField)
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data
     }
 
 
 
-    async list(tbName: String, field: Array<string>, extra?: SqlExtra): Promise<{ data, cnt:number, fields, query }> {
+    /**
+     * 查询
+     * @param tbName raw string as from block, but recommend use UseJoin model for safety
+     * @param field 
+     * @param extra 
+     * @param nestTables 
+     */
+    async list(tbName: String|UseJoin, field: Array<string>=['*'], extra?: SqlExtra, nestTables?:undefined|boolean|string): Promise<{ data, cnt:number}> {
         if (!tbName) {
             throw 'tbName必须提供'
         }
@@ -98,29 +152,36 @@ export class Dao {
 
         let {sql, params} = this.sqlGen.genSelect(tbName, field, extra)
 
+        let qryOpt = sql
+        if(nestTables){
+            qryOpt = {sql, nestTables}
+        }else if(field.includes('*')){
+            qryOpt = {sql, nestTables:true}
+        }
         let conn = await this.getConn()
-        let [data, fields, query] = await conn.query(sql, params)
+        let [data, fields, query] = await conn.query(qryOpt, params)
         let cnt = data.length
         if(extra?.pagin){
             [cnt] = await conn.query(this.sqlGen.countSql)
         }
         // console.log([data, fields, query]);
-        return { data, cnt, fields, query }
+        return { data, cnt }
     }
 
     /**
      * 假删除的数据不查询
+     * list Without soft delete
      * @param tbName 表名
      * @param field 字段列表
      * @param extra 扩展查询
      */
-    async listNormal(tbName: String, field: Array<string>, extra?: SqlExtra): Promise<{ data, cnt:number, fields, query }> {
+    async listWsd(tbName: String|UseJoin, field: Array<string>=['*'], extra?: SqlExtra): Promise<{ data, cnt:number }> {
         extra = _.mergeWith(extra, {
             where:{
                 cdm:[{
-                    p:'deleteAt',
-                    v:null,
-                    r:'is'
+                    lt:{p:'$deleteAt'},
+                    r:'is',
+                    rt:{p:null},
                 }]
             }
         }, (o,s)=>{
@@ -134,9 +195,26 @@ export class Dao {
     }
 
     allInvisibleFields<T>(clazz:{ new(): T }):Array<keyof (T|tableInvisible)> {
-        const fields = _.intersection(Object.keys(clazz.prototype), Object.keys(tableInvisible.prototype))
+        const fields = _.intersection(Object.keys(clazz.prototype), Object.keys(new tableInvisible()))
         return fields as any
     }
 
 
+
+
+    
+
 }
+
+
+
+
+// let u: UseJoin = ['234',{
+//     $join:{
+//         a:'3'
+//     }
+// },{
+//     $leftJoin:{
+//         a:'3'
+//     }
+// }]

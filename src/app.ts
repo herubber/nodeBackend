@@ -26,7 +26,12 @@ import { signMethod } from "./middleware/verify";
 
 import { app as appCfg } from "./config";
 
+import addSocket from './socket'
+import socketio from 'socket.io'
+import { actionLog } from './middleware';
 
+
+console.log(123454321);
 process.on('uncaughtException', err => {
     console.error('An uncaught error occurred!');
     //console.error(err.stack);
@@ -179,6 +184,7 @@ app.use(cors({
 //   allowHeaders: ['Content-Type', 'Authorization', 'Accept'],
 // }));
 
+app.use(actionLog())
 
 // handle the error
 app.use(errorHandler());
@@ -217,8 +223,7 @@ app.on('error', (err, ctx) => {
     }
 });
 
-import addSocket from './socket'
-import socketio from 'socket.io'
+
 // import http from 'http'
 
 
