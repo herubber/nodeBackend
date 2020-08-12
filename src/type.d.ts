@@ -28,27 +28,29 @@ declare module "mysql" {
 //   [P in keyof T]?: T[P];
 // }
 
-export declare interface CondictionModel{
+// export declare interface CondictionModel{
 
-    /**字段名 */
-    p:string
+//     /**字段名 */
+//     p:string
 
-    /**参数值 */
-    v:any|any[]
+//     /**参数值 */
+//     v:any|any[]
 
-    /**函数名,如果有需要 */
-    f?:string
+//     /**函数名,如果有需要 */
+//     f?:string
 
-    /**关系 ConditionRelation,  */
-    r?: keyof ConditionRelation
+//     /**关系 ConditionRelation,  */
+//     r?: keyof ConditionRelation
 
-}
+// }
 
+
+export type ExpressionGroup = Array<ExpressionModel|ExpressionGroup>
 
 /**
- * where 扩展块, 应该用 抽象多种表达式类型
+ * Link扩展块, 用于hwere或 on 类似的条件表达式
  */
-export declare interface WhereBlock{
+export declare interface LinkBlock{
   /**
    * 简单的field=value可以直接用obj对象传入
    */
@@ -56,11 +58,12 @@ export declare interface WhereBlock{
   /**
    * 简单的条件表达式模型
    */
-  cdm?:Array<CondictionModel>,
+  // cdm?:Array<CondictionModel>,
+  cdm?:ExpressionGroup,
   /**
    * 字符串方式
    */
-  rawWhere?:string
+  raw?:string
 }
 
 
@@ -68,14 +71,15 @@ export declare interface WhereBlock{
 export declare interface SqlExtra{
   returning?:string,
   set?:{
-    cdm?:Array<CondictionModel>,
+    // cdm?:Array<CondictionModel>,
+    cdm?:Array<ExpressionModel>,
     rawSet?:string
   },
   select?:{
     invisibleField?:Array<string>,
     rawSelect?:string
   },
-  where?:WhereBlock,
+  where?:LinkBlock,
   order?:{
     desc?:boolean,
     rawOrder:string[],
@@ -111,54 +115,62 @@ type RouteMeta = {
 }
 
 type MiddleWare = (...arg: any[]) => (ctx: Context, next?: Next) => Promise<void>;
-
-declare interface ExpressionSite{
+type ExpressionSiteParam = string|ExpressionSite|any
+export declare interface ExpressionSite{
+  /**
+   * 参数可以是字段名,用$开头
+   * 可以是任何值
+   * 暂时不可以是表达式本身,完善后可以用表达式本身,组织表达式树,递归嵌套解释表达式生成
+   */
+  p:ExpressionSiteParam|Array<ExpressionSiteParam>,
+  /**
+   * 函数名,如果有
+   */
   fn?:string,
-  p:Array<string|ExpressionSite|any>,
+  /**
+   * todo: 如果fn带over, 未实现8-12
+   */
+  over?:{
+    p?:ExpressionSiteParam|Array<ExpressionSiteParam>,
+    o?:ExpressionSiteParam|Array<ExpressionSiteParam>,
+  }
 }
 
 /**
  * 表达式, 灵感于 .net fx 表达式/树模型, 这里设置没有用表达式书组成, 用到只能自己写sql了
  * 后面有空的就重构 构建者模式的设计,可以补充更复杂的嵌套sql
  */
-declare interface ExpressionModel{
+export declare interface ExpressionModel{
+
+  link?:'and'|'or'
   /**
    * 表达式左边
    */
-  left:{
-      fn:string,
-      p:any|any[],
-  },
+  left:ExpressionSite,
   /**
    * 表达式右边
    * 暂时想到between关系表达式右边带2个,所以可以是数组
    */
-  right:{
-    fn:string,
-    p:any|any[],
-  }|Array<{
-    fn:string,
-    p:any|any[],
-  }>,
+  right?:ExpressionSite|Array<ExpressionSite>,
   /**
    * 暂时想到between关系表达式右边带2个
    */
   /**
    * 关系
    */
-  relate:keyof ConditionRelation
+  relate?:keyof ConditionRelation
 }
 
 type joinType = '$join'|'$left'|'$right'
 export declare interface JoinModel{
   tb:string,
   as?:string,
-  on:Array<string|ExpressionModel>
+  on:LinkBlock
 }
 
-type $join = {$join:JoinModel}
-type $leftJoin = {$leftJoin:JoinModel}
-type $rightJoin = {$rightJoin:JoinModel}
+export type $join = {$join:JoinModel}
+export type $leftJoin = {$leftJoin:JoinModel}
+export type $rightJoin = {$rightJoin:JoinModel}
 
 declare type join = $join|$leftJoin|$rightJoin
 
