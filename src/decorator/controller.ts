@@ -37,7 +37,7 @@ export function addMidWare(middleName:string, opt?:{/**order小排前面*/order?
 export function routerMap(path?:string, opt?:{/**order小排前面*/order?:number, args?:any[]}) {
   return (target: any) => {
     if(!path){
-      path = '/api/'+target.name
+      path = '/'+target.name
     }
     // const target = proto;
     const routeMap = Reflect.getMetadata(ROUTER_MAP, target, 'class') || [];

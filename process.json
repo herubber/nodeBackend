@@ -11,7 +11,7 @@
         "out_file": "./logs/app_out.log",
         "merge_logs": true,
         "exec_mode": "cluster",
-        "max_memory_restart": "100M",
+        "max_memory_restart": "200M",
         "cron_restart": "0 1 * * * ",
         "env": {
           "NODE_ENV": "production"

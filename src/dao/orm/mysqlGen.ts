@@ -346,8 +346,8 @@ ${paginSql}`
     }
 
     public static genInsert<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra){
-        let sql = `INSERT INTO ${tbName} SET ?`
-        let params: Array<any> = []
+        let sql = `INSERT INTO ?? `
+        let params: Array<any> = [tbName]
 
         let setSql: Array<any> = []
         if (obj) {
@@ -358,7 +358,7 @@ ${paginSql}`
         // 处理条件模型表达式
         let [cdmSql, cdmParam] = this.buildNonGroupExpressions(extra?.set?.cdm)
         setSql.push(...cdmSql)
-        params.push(cdmParam)
+        params.push(...cdmParam)
 
         // if (extra?.set?.cdm?.length) {
         //     extra.set.cdm.forEach(c => {
@@ -383,9 +383,9 @@ ${paginSql}`
         }
         let setSqlStr = setSql.join(',')
         if(extra?.returning){
-            sql = `${sql}${setSqlStr} returning ${extra.returning}`
+            sql = `${sql} set ${setSqlStr} returning ${extra.returning}`
         }else{
-            sql = `${sql}${setSqlStr}`
+            sql = `${sql} set ${setSqlStr}`
         }
         return {sql, params}
     }
@@ -470,9 +470,10 @@ ${paginSql}`
         return [joinSqlStr, joinParams]
     }
 
-    public static genSelect(tbName: String|UseJoin, fields: Array<string>, extra?: SqlExtra){
+    public static genSelect(tbName: String|UseJoin, field: Array<string>, extra?: SqlExtra){
         this.checkSqlSiteAndThrowError(!!tbName)
 
+        let fields = _.cloneDeep(field)
         let joinArr:UseJoin=[]
 
         let fromSql = ''
@@ -539,11 +540,11 @@ order by ${orderSql}`
 
 
     public static genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra){
-
         let id
         let obj = setObj
         let whereExtra = extra?.where
         if(setObj && setObj[identityField]){
+            id = setObj[identityField]
             obj = _.omit(setObj,[identityField])
             whereExtra = _.merge({where:{obj:{[identityField]:id}}},extra?.where)
         }

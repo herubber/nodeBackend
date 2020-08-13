@@ -29,9 +29,9 @@ import { app as appCfg } from "./config";
 import addSocket from './socket'
 import socketio from 'socket.io'
 import { actionLog } from './middleware';
+import { getPoolp } from './common/mysql';
 
 
-console.log(123454321);
 process.on('uncaughtException', err => {
     console.error('An uncaught error occurred!');
     //console.error(err.stack);
@@ -53,7 +53,7 @@ process.on('uncaughtException', err => {
 const baseDir = path.normalize(__dirname + '/..')
 
 
-
+getPoolp()
 const app = new koa()
 
 // app.use(koaSwagger({
@@ -62,7 +62,6 @@ const app = new koa()
 //     //     url: '/swagger.json', // example path to json 其实就是之后swagger-jsdoc生成的文档地址
 //     // },
 // }))
-
 
 
 // gzip , 使用 ctx.compress = true
@@ -193,6 +192,7 @@ app.use(errorHandler());
 app.use(signMethod());
 
 const router = new koaRouter()
+
 
 
 // add route

@@ -40,7 +40,7 @@ export async function addUser(_userObj:Partial<user>){
 
 export async function getUserById(id: string){
     const dao = new Dao()
-    const ret = await dao.getById(user.name, id)
+    const ret = await dao.get(user.name, id)
     return ret
 }
 
@@ -61,8 +61,6 @@ export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>
     // if(ret.data)
     return ret.data
 }
-
-
 
 
 

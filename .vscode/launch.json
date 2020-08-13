@@ -30,7 +30,6 @@
             "restart": true,
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
-            
         },{
             "type": "node",
             "request": "launch",

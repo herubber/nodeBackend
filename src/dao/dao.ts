@@ -119,7 +119,7 @@ export class Dao {
     }
 
     
-    async getById(tbName: String, id:string, field:Array<string>=['*'],showExtraField=false){
+    async get(tbName: String, id:string, field:Array<string>=['*'],showExtraField=false){
         let {sql, params} = this.sqlGen.genGetById(tbName,id,field,showExtraField)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
