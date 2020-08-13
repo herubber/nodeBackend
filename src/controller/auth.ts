@@ -9,7 +9,7 @@ import { redis } from "@src/common/redis";
 import { changePwd } from "@src/bll/auth";
 import { VError } from "verror";
 
-@routerMap()
+@routerMap('/api/auth')
 export default class Auth {
     @post('/login')
     async login(ctx: Context) {
@@ -17,19 +17,19 @@ export default class Auth {
         if (!lang) {
             lang = 'cn'
         }
-        // let users: any[] = []
-        let users
+        let users: any[] = []
+        // let users
         if (username && password) {
             users = await verifyUserByPwd(username, password)
         }
         else {
             throw await Err(errConst.apiParamsErr, ctx, lang)
         }
-        // if (!users.length) {
-        //     throw await Err(errConst.userOrPwdErr, ctx, lang)
-        // }
-        // let lgUsr = users[0]
-        let lgUsr = users
+        if (!users.length) {
+            throw await Err(errConst.userOrPwdErr, ctx, lang)
+        }
+        let lgUsr = users[0]
+        // let lgUsr = users
         let payload = _.pick(lgUsr, payloadFieldsArray) as Payload
 
         let token = ctx.jwtSign(payload);

@@ -76,7 +76,7 @@ export default class Test extends LikeAspnetMvcController {
 
     @get("/test3")
     async test3(ctx: Context) {
-        throw new VError("抛了一个异常");
+        throw new VError("抛了一个异常111");
     }
 
 

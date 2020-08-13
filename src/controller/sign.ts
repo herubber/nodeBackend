@@ -36,10 +36,10 @@ export default class Sign {
       //刷卡登陆, 必须 imei 提供
       const dao = new Dao()
       const ret = await dao.listWsd(user.name, ['*'], {
-        where: {
-          obj: { cardId, alCardVerify: 1 },
-        }
-      })
+        where: {obj: { 
+          cardId, alCardVerify: 1 
+        },
+      }})
       users = ret.data
     } else {
       throw newErr(errConst.apiParamsErr)

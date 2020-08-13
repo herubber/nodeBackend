@@ -155,7 +155,7 @@ export class Dao {
         let qryOpt = sql
         if(nestTables){
             qryOpt = {sql, nestTables}
-        }else if(field.includes('*')){
+        }else if(field.includes('*') && Array.isArray(tbName) && tbName.length>1 ){
             qryOpt = {sql, nestTables:true}
         }
         let conn = await this.getConn()

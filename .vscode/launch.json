@@ -56,6 +56,13 @@
             "skipFiles": [
                 "<node_internals>/**"
             ]
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "window用，hotdebug后调试",
+            "restart": true,
+            "port":9229
         }
     ]
 }

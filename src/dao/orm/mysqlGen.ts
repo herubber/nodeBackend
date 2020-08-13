@@ -34,7 +34,7 @@ export interface SqlGen{
 
 
 function isEmptyArray(arr):boolean{
-    return arr?.length>0
+    return !arr?.length
 }
 
 const sqlDangerRegx = /[-|#|@|$|/|;|\\]/
@@ -540,17 +540,15 @@ order by ${orderSql}`
 
 
     public static genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra){
-        let id
         let obj = setObj
         let whereExtra = extra?.where
         if(setObj && setObj[identityField]){
-            id = setObj[identityField]
             obj = _.omit(setObj,[identityField])
-            whereExtra = _.merge({where:{obj:{[identityField]:id}}},extra?.where)
+            whereExtra = _.merge({obj:{[identityField]:setObj[identityField]}},extra?.where)
         }
         
         let [whereSqlStr, whereSqlParam] = this.buildLink(whereExtra)
-        this.checkSqlSiteAndThrowError(id || !!whereSqlStr)
+        this.checkSqlSiteAndThrowError( !!whereSqlStr)
 
 
         let [setSqlBlocks, setParams] = this.buildNonGroupExpressions(extra?.set?.cdm)
