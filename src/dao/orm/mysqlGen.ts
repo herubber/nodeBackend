@@ -549,7 +549,7 @@ order by ${orderSql}`
         }
         
         let [whereSqlStr, whereSqlParam] = this.buildLink(whereExtra)
-        this.checkSqlSiteAndThrowError(id && !!whereSqlStr)
+        this.checkSqlSiteAndThrowError(id || !!whereSqlStr)
 
 
         let [setSqlBlocks, setParams] = this.buildNonGroupExpressions(extra?.set?.cdm)

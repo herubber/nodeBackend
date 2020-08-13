@@ -14,7 +14,7 @@
     "debug": "tsc --sourcemap",
     "watch": "tsc -w --sourcemap",
     "build": "tsc: build - tsconfig.json",
-    "nodemon":"nodemon",
+    "nodemon": "nodemon",
     "preHotdebug": "nodemon --inspect ./dist/app.js",
     "hotdebug": "concurrently \"npm run watch\" \"npm run nodemon\"",
     "pm2": "pm2 start process.json"

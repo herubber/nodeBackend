@@ -93,15 +93,40 @@ export default class Test extends LikeAspnetMvcController {
         if (usr && pwd) {
             var a = { a: usr, b: pwd };
             var dao = new Dao()
-            var ret = await dao.listNormal('role', ['*'], {
+            // var ret = await dao.listWsd('role', ['*'], {
+            //     where: {
+            //         obj: { state: 1 },
+            //     }
+            // })
+            var ret = await dao.listWsd('user', ['*'], {
                 where: {
-                    obj: { id: '98692077222625312S' },
+                    obj: { state: 1 },
+                    // cdm: [{
+                    //     lt: { p: '$pwd' },
+                    //     rt: {
+                    //         p: pwd,
+                    //         fn: 'password'
+                    //     }
+                    // }]
                 }
             })
             ctx.body = new ResMd(ret.data)
         } else {
             throw await Err(errConst.apiParamsErr, ctx);
         }
+    }
+
+    @post("/test6")
+    async test6(ctx: Context) {
+        var dao = new Dao()
+        var ret = await dao.listWsd('role', ['*'], {
+            where: {
+                obj: { state: 1 },
+            }
+        })
+        console.log(ret);
+        
+        ctx.body = new ResMd({data:ret.data,cnt:ret.cnt})
     }
 }
 
