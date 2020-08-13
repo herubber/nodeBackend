@@ -54,11 +54,15 @@ export const getPoolp = async ()=>{
     if(!poolp){
         log.info("creating pool");
         try {
-            poolp = await pmysql.createPool(dbConfig)
+          poolp = await pmysql.createPool(_.cloneDeep(dbConfig))
         } catch (error) {
             throw error
         }
     }
+    // if(dbConfig.returnArgumentsArray){
+      
+    //   poolp['returnArgumentsArray'] = dbConfig.returnArgumentsArray
+    // }
     return poolp
 }
 

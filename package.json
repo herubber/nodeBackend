@@ -11,11 +11,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
-    "debug": "tsc --sourcemap",
-    "watch": "tsc -w --sourcemap",
+    "debug": "tsc --sourceMap",
+    "watch": "tsc -w --sourceMap",
     "build": "tsc: build - tsconfig.json",
-    "nodemon":"nodemon",
-    "preHotdebug": "nodemon --inspect ./dist/app.js",
+    "nodemon":"nodemon --inspect ./dist/app.js",
+    "preHotdebug": "npm run nodemon",
     "hotdebug": "concurrently \"npm run watch\" \"npm run nodemon\"",
     "pm2": "pm2 start process.json"
   },
