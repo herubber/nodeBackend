@@ -15,4 +15,4 @@ export const userFields:{[name in keyof user]:string} = Object.fromEntries(userF
 export const userInvisibleFieldsArray = _.intersection(invisibleFieldsArray,userFieldsArray)
 export const userInvisibleFields:{[name in keyof (user|tableInvisible)]:string} = _.pick(userFields,userInvisibleFieldsArray) as any
 
-console.log(userFields)
+// console.log(userFields)

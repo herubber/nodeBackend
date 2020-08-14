@@ -65,7 +65,7 @@ export const jwtVerify: MiddleWare = (isVerify: boolean = true, autorefreshExp =
         // ctx.state.tt = jsonWebToken.decode(token,{complete: true});
         let payload = jsonWebToken.verify(token, app.secret);
         ctx.state.token = payload
-        console.log(payload)
+        
         // if(cb){
         //   cb(token, payload)
         // }

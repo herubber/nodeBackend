@@ -74,5 +74,5 @@ export const log4js = {
             }
         }
     },
-    categories: { default: { appenders: ['file'], level: 'info' } }
+    categories: { default: { appenders: ['file'], level: 'debug' } }
 }

@@ -3,8 +3,10 @@ import { SqlExtra, UseJoin } from '@src/type'
 import { conditionRelation } from "@src/constant";
 import _ from 'lodash';
 import { getPoolp } from '@src/common/mysql';
-import { MySqlGen, SqlGen } from './orm/mysqlGen';
+import { MySqlGen, SqlGen, identityField } from './orm/mysqlGen';
 import { tableInvisible } from '../models/tableBase';
+
+const sDelField = 'deleteAt'
 
 export class Dao {
 
@@ -38,7 +40,7 @@ export class Dao {
     async query(sql, args){
         let conn = await this.getConn()
         let [data, fields, query] = await conn.query(sql, args)
-        console.log([data, fields, query]);
+        
         return { data, fields, query }  
     }
 
@@ -80,7 +82,6 @@ export class Dao {
 
         let conn = await this.getConn()
         let [data, fields, query] = await conn.query(sql, params)
-        console.log([data, fields, query]);
         return { data, fields, query }
     }
 
@@ -102,9 +103,58 @@ export class Dao {
     async update<T>(tbName: String, obj?: Partial<T>, extra?:SqlExtra){
         let {sql, params} = this.sqlGen.genUpdate(tbName, obj, extra)
         let conn = await this.getConn()
-        let [data, fields, query] = await conn.query(sql, params)
+        let [data] = await conn.query(sql, params)
         return data.affectedRows
     }
+
+    /**
+     * soft delete a record by id
+     * @param tbName 
+     * @param id 
+     */
+    async sDelete(tbName:String, id:String){
+        let {sql, params} = this.sqlGen.genUpdate(tbName, {sDelField:null}, {where:{o:{[identityField]:id}}})
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data.affectedRows
+    }
+
+    /**
+     * soft delete a record by Extra.where
+     * @param tbName 
+     * @param extra 
+     */
+    async sDeleteBy(tbName:String, extra:SqlExtra){
+        let {sql, params} = this.sqlGen.genUpdate(tbName, {sDelField:null}, extra)
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data.affectedRows
+    }
+
+    /**
+     * delete a record by id
+     * @param tbName 
+     * @param id 
+     */
+    async delete(tbName:String, id:String){
+        let {sql, params} = this.sqlGen.genDelete(tbName, {where:{o:{[identityField]:id}}})
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data.affectedRows
+    }
+
+    /**
+     * delete a record by Extra.where
+     * @param tbName 
+     * @param extra 
+     */
+    async deleteBy(tbName:String, extra:SqlExtra){
+        let {sql, params} = this.sqlGen.genDelete(tbName, extra)
+        let conn = await this.getConn()
+        let [data] = await conn.query(sql, params)
+        return data.affectedRows
+    }
+    
 
     /**
      * update by object ignor nil value
@@ -156,15 +206,20 @@ export class Dao {
         if(nestTables){
             qryOpt = {sql, nestTables}
         }else if(field.includes('*') && Array.isArray(tbName) && tbName.length>1 ){
-            qryOpt = {sql, nestTables:true}
+            nestTables=true
+            qryOpt = {sql, nestTables}
         }
         let conn = await this.getConn()
         let [data, fields, query] = await conn.query(qryOpt, params)
         let cnt = data.length
-        if(extra?.pagin){
-            [cnt] = await conn.query(this.sqlGen.countSql)
+        if(nestTables===true){
+            data = data.map(d=>({...d}))
         }
-        // console.log([data, fields, query]);
+        if(extra?.pagin){
+            let [[{count}]] = await conn.query(this.sqlGen.countSql)
+            cnt = count
+        }
+        
         return { data, cnt }
     }
 
@@ -198,9 +253,6 @@ export class Dao {
         const fields = _.intersection(Object.keys(clazz.prototype), Object.keys(new tableInvisible()))
         return fields as any
     }
-
-
-
 
     
 

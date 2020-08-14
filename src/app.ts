@@ -255,8 +255,8 @@ if (!module.parent) {
 
     // app.listen(port);
     // server.listen(port);// does the same like: app.listen(port)
-    log.info(`=== app server running on port ${port} ===`);
-    console.log('app server running at: http://localhost:%d', port);
+    // log.info(`=== app server running on port ${port} ===`);
+    // console.log('app server running at: http://localhost:%d', port);
 
     /**
      * socket.io
@@ -266,7 +266,7 @@ if (!module.parent) {
     addSocket(io);
     server.listen(socketPort);
     log.info(`=== socket listening on port ${socketPort} ===`)
-    console.log('socket server running at: http://localhost:%d', socketPort);
+    console.log('socket server running at: https://localhost:%d', socketPort);
 }
 
 // import http from 'http'

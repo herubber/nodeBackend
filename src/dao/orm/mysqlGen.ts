@@ -1,13 +1,15 @@
-import { SqlExtra, LinkBlock, /*CondictionModel,*/ ExpressionModel, ExpressionSite, UseJoin, ExpressionGroup, $join, $leftJoin, $rightJoin, JoinModel } from "@src/type"
+import { SqlExtra, LinkBlock, /*CondictionModel,*/ ExpressionModel, ExpressionSite, UseJoin, ExpressionGroup, JoinModel } from "@src/type"
 import { conditionRelation } from "@src/constant"
 import _, { groupBy } from "lodash"
 import vError from 'verror'
 const mysql = require('mysql')
 import {PoolConnection, mysqlModule} from 'promise-mysql'
 import { invisibleFieldsArray } from "@src/models/tableConst"
+import { jwtVerify } from "@src/middleware"
 
 
 export interface SqlGen{
+    genDelete(tbName:String, extra: SqlExtra)
     genInsert<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra)
     genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra)
     genSelect(tbName: String|UseJoin, fields: Array<string>, extra?: SqlExtra)
@@ -38,7 +40,7 @@ function isEmptyArray(arr):boolean{
 }
 
 const sqlDangerRegx = /[-|#|@|$|/|;|\\]/
-const identityField = 'id'
+export const identityField = 'id'
 export class MySqlGen {
 
 
@@ -71,6 +73,7 @@ ${paginSql}`
         }
 
     }
+
     /**
      * 构建group by 语句块, 后面重构构建者模式 作准备
      * @param extra 扩展对象 @link :SqlExtra
@@ -94,8 +97,6 @@ ${paginSql}`
     }
 
 
-
-
     /**
      * $开头表示字段名
      * @param site 
@@ -117,11 +118,14 @@ ${paginSql}`
 
         siteMap.forEach(s => {
             // 如果参数是表达式,如果你看到这行的注释,就完善下面实现吧
-            if(s.p?.left){
-                throw new vError({
-                    name: 'noimplimentation',
-                    info:{code:0, }
-                },'表达式嵌套功能暂不支持', {})
+            if(s.p?.p){
+                let [innerSqls, innerParam] = this.buildSite(s.p)
+                sql.push(...innerSqls)
+                params.push(...innerParam)
+                // throw new vError({
+                //     name: 'noimplimentation',
+                //     info:{code:0, }
+                // },'表达式嵌套功能暂不支持', {})
             }
             //如果参数是字段
             if(typeof s.p === 'string' && s.p.startsWith('$')){
@@ -130,13 +134,24 @@ ${paginSql}`
             } else if (Array.isArray(s.p)){
                 // 一个site如果p是数组,这种情况应该是fn(,...)
                 placeholder =s.p.map(p=>{
+
+                    // 这里好像可以递归buildSite
                     if(typeof p === 'string' && p.startsWith('$')){
-                        params.push(s.p.slice(1))
+                        params.push(p.slice(1))
                         return '??'
+                    } else if(Array.isArray(p)){
+                        let [innerSqls, innerParam] = this.buildSite(p)
+                        params.push(...innerParam)
+                        return innerSqls.join(',')
+                    } else if(p.p){
+                        let [innerSqls, innerParam] = this.buildSite(p)
+                        params.push(...innerParam)
+                        return innerSqls.join(',')
                     } else {
-                        params.push(s.p)
+                        params.push(p)
                         return '?'
                     }
+
                 }).join(',')
             } else {
                 // 值
@@ -225,6 +240,7 @@ ${paginSql}`
             params.push(...rp)
         } else if(!c.rt || (<[]>c.rt).length==0){
             // 没关系就没右边
+            sql = ls[0]
         } else{
             // 普通关系表达式,左右都1个
             this.checkSqlSiteAndThrowError( (!Array.isArray(c.rt)) ||(Array.isArray(c.rt) && c.rt.length==1))
@@ -302,7 +318,7 @@ ${paginSql}`
         let linkSqlParam: Array<any> = []
 
         // 处理 简单等值关系表达式
-        if(link.obj){
+        if(link.o){
             // linkSql.push(' ? ')
             // linkSqlParam.push(extra.where.obj)
             // let wo = link.obj
@@ -312,7 +328,7 @@ ${paginSql}`
             //     linkSqlParam.push(wo[k])
             // })
             linkSql.push('?')
-            linkSqlParam.push(link.obj)
+            linkSqlParam.push(link.o)
         }
         // 处理条件模型表达式
         if(link.cdm){
@@ -424,9 +440,27 @@ ${paginSql}`
         return {sql, params}
     }
 
+    private static getJoinType(jt:JoinModel){
+        let joinTypeMap = {
+            l:'left join',
+            r:'right join',
+            i:'inner join',
+            f:'full join',
+        }
+
+        for (const k in joinTypeMap) {
+            if(jt[k]){
+                return [k,joinTypeMap[k]]
+            }
+        }
+        return [null,null]
+    }
     public static buildJoin(joinArr:UseJoin){
         let joinSqlStr = ''
         let joinParams:any[] = []
+
+        this.checkSqlSiteAndThrowError(joinArr.length>0)
+        
         joinArr.forEach((jt,idx) => {
             // raw string
             if(typeof jt === 'string'){
@@ -434,37 +468,25 @@ ${paginSql}`
                 return
             } 
 
-            // joinModel
-            let jm:JoinModel|undefined=undefined
-            let joinType=''
-
-            if((<$join>jt).$join){
-                jm = (<$join>jt).$join
-                joinType = 'join '
-            } else if((<$leftJoin>jt).$leftJoin){
-                jm = (<$leftJoin>jt).$leftJoin
-                joinType = 'left join '
-            } else if((<$rightJoin>jt).$rightJoin){
-                jm = (<$rightJoin>jt).$rightJoin
-                joinType = 'right join '
+            joinParams.push(jt.tb)
+            let as=''
+            if(jt.as){
+                as = `as ??`
+                joinParams.push(jt.as)
             }
-
-            if(!jm){
-                this.checkSqlSiteAndThrowError(true)
-            }else{
-                joinParams.push(jm.tb)
-                let as=''
-                if(jm.as){
-                    as = `as ??`
-                    joinParams.push(jm.as)
-                }
-                let [onSql, onParams] = this.buildLink(jm.on)
+            if(idx>0){
+                let [joinTypeKey,joinType]=this.getJoinType(jt)
+                
+                // 不是第一个表,后面join的必须有jointype
+                this.checkSqlSiteAndThrowError(joinTypeKey)
+                
+                let linkBlock = jt[joinTypeKey]
+                let [onSql, onParams] = this.buildLink(linkBlock)
                 joinParams.push(...onParams)
+                joinSqlStr += `${joinType} ?? ${as} on ${onSql}\n`
+            }else{
                 // 第一个主表不需要 jointype
-                if(idx>0){
-                    joinType=''
-                }
-                joinSqlStr += `${joinType}?? ${as} on ${onSql}\n`
+                joinSqlStr += `?? ${as}\n`
             }
         });
         return [joinSqlStr, joinParams]
@@ -474,7 +496,6 @@ ${paginSql}`
         this.checkSqlSiteAndThrowError(!!tbName)
 
         let fields = _.cloneDeep(field)
-        let joinArr:UseJoin=[]
 
         let fromSql = ''
         let fromSqlParam: Array<any> = []
@@ -482,7 +503,7 @@ ${paginSql}`
             this.checkSqlDangerAndThrowError(tbName)
             fromSql = `from ${tbName}\n`
         } else if(Array.isArray(tbName)) {
-            let [joinSqlStr, joinParams] = this.buildJoin(joinArr)
+            let [joinSqlStr, joinParams] = this.buildJoin(tbName)
             fromSql = `from ${joinSqlStr}`
             fromSqlParam = <any[]>joinParams
         }
@@ -569,5 +590,17 @@ order by ${orderSql}`
         let params=[tbName,...setParams,...whereSqlParam]
         return {sql, params}
     }
+
+
+    public static genDelete(tbName:String, extra: SqlExtra){
+        let [whereSqlStr, whereSqlParam] = this.buildLink(extra.where)
+        this.checkSqlSiteAndThrowError( !!whereSqlStr)
+
+        let sql = `delete from ?? where ${whereSqlStr}`
+        let params=[tbName,...whereSqlParam]
+        return {sql, params}
+    }
+
     
+
 }

@@ -48,7 +48,7 @@ export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>
     const dao = new Dao()
     const ret = await dao.listWsd(user.name, ['*'],{
         where:{
-            obj:{usr},
+            o:{usr},
             cdm:[{
                 lt:{p:'$pwd'},
                 rt:{

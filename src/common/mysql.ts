@@ -9,6 +9,7 @@ import { ConditionRelation } from '@src/constant'
 import _ from "lodash";
 import {SqlExtra} from '@src/type'
 import { conditionRelation } from "@src/constant";
+import { QueryFunction } from 'promise-mysql'
 
 
 
@@ -48,13 +49,23 @@ export const getPool = () => {
 
 
 
+import * as Bluebird from 'bluebird';
+import { info } from 'verror'
 
 let poolp :pmysql.Pool
 export const getPoolp = async ()=>{
     if(!poolp){
-        log.info("creating pool");
         try {
           poolp = await pmysql.createPool(_.cloneDeep(dbConfig))
+          let pqry = poolp.query;
+          (<any>poolp.query) = function():QueryFunction<Bluebird<any>>{
+            let args = Array.prototype.slice.call(arguments)
+            // console.log(args)
+            let s = mysql.format(args[0].sql||args[0],args[1])
+            log.debug(s);
+            let ret = <any>pqry.apply(poolp, <[string, any]>args)
+            return ret
+          }
         } catch (error) {
             throw error
         }
@@ -63,8 +74,10 @@ export const getPoolp = async ()=>{
       
     //   poolp['returnArgumentsArray'] = dbConfig.returnArgumentsArray
     // }
+
     return poolp
 }
+
 
 
 

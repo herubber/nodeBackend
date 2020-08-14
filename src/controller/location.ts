@@ -39,7 +39,7 @@ export default class Location {
       const dao = new Dao()
       const ret = await dao.listWsd(user.name, ['*'],{
           where:{
-              obj:{cardId, alCardVerify:1},
+              o:{cardId, alCardVerify:1},
           }
       })
       users = ret.data

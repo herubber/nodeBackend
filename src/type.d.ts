@@ -54,7 +54,7 @@ export declare interface LinkBlock{
   /**
    * 简单的field=value可以直接用obj对象传入
    */
-  obj?:any,
+  o?:any,
   /**
    * 简单的条件表达式模型
    */
@@ -130,7 +130,7 @@ export declare interface ExpressionSite{
   /**
    * todo: 如果fn带over, 未实现8-12
    */
-  over?:{
+  o?:{
     p?:ExpressionSiteParam|Array<ExpressionSiteParam>,
     o?:ExpressionSiteParam|Array<ExpressionSiteParam>,
   }
@@ -162,19 +162,70 @@ export declare interface ExpressionModel{
 }
 
 type joinType = '$join'|'$left'|'$right'
-export declare interface JoinModel{
-  tb:string,
-  as?:string,
-  on:LinkBlock
+// type joinType = ['$join','$left','$right']
+// declare type joinType = {
+//   l:'left join',
+//   r:'right join',
+// }
+
+// export type JoinOn =
+//   /**
+//    * left join
+//    */
+//   { l?: LinkBlock }| 
+//   /**
+//    * right join
+//    */
+//   { r?: LinkBlock }| 
+//   /**
+//    * inner join
+//    */
+//   { i?: LinkBlock }| 
+//   /**
+//    * full join
+//    */
+//   { f?: LinkBlock }
+
+// declare interface JoinModelBase{
+  export declare interface JoinModel{
+  /**
+   * join type,l:left join, r:right join, f:full join, i:join
+   */
+  tb:string
+  /**
+   * as alias name
+   */
+  as?:string
+
+    /**
+   * left join
+   */
+  l?: LinkBlock
+  /**
+   * right join
+   */
+  r?: LinkBlock 
+  /**
+   * inner join
+   */
+  i?: LinkBlock
+  /**
+   * full join
+   */
+  f?: LinkBlock 
 }
 
-export type $join = {$join:JoinModel}
-export type $leftJoin = {$leftJoin:JoinModel}
-export type $rightJoin = {$rightJoin:JoinModel}
+// export type JoinModel = Partial<JoinModelBase | JoinOn>
 
-declare type join = $join|$leftJoin|$rightJoin
 
-export declare type UseJoin = Array<string|join>
+
+// export type $join = {$join:JoinModel}
+// export type $leftJoin = {$leftJoin:JoinModel}
+// export type $rightJoin = {$rightJoin:JoinModel}
+
+// declare type join = $join|$leftJoin|$rightJoin
+
+export declare type UseJoin = Array<string|JoinModel>
 
 export {
   // ResData,
