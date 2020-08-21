@@ -1,7 +1,7 @@
 import { tableBase } from "../tableBase"
 
 // export class user extends tableBase {
-export class user {
+export class User {
     id:string|undefined = undefined
     insertAt?:any= undefined
     updateAt?:any= undefined
@@ -20,17 +20,18 @@ export class user {
     pwd:any= undefined
     code:any= undefined
     cardId:any= undefined
-    roleId:any= undefined
-    orgIds:any= undefined
-    cnName:any= undefined
-    hkName:any= undefined
-    enName:any= undefined
-    age:any= undefined
-    passport:any= undefined
+    roleId?:string= undefined
+    roleCode?:string=undefined
+    orgIds?:string[]= undefined
+    cnName?:string= undefined
+    hkName?:string= undefined
+    enName?:string= undefined
+    age?:number= undefined
+    passport?:string= undefined
     echelonid:any= undefined
-    tel:any= undefined
-    email:any= undefined
+    tel?:string= undefined
+    email?:string= undefined
     alCardVerify?:number = undefined
-    superiorId:any= undefined
-    lang:any= undefined
+    superiorId?:string= undefined
+    lang?:string= undefined
 }

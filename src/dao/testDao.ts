@@ -1,5 +1,5 @@
 import { Dao } from "./dao";
-import { user } from "@src/models/table/user";
+import { User } from "@src/models/table/user";
 
 
 export async function testSelect(){

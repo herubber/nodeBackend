@@ -6,7 +6,7 @@ import { Context } from "koa";
 import { post, get, addMidWare } from '../decorator/controller'
 import { midNames } from "@src/middleware";
 import { Dao } from "@src/dao/dao";
-import { user } from "@src/models/table/user";
+import { User } from "@src/models/table/user";
 import { testSelect } from "@src/dao/testDao";
 
 export default class Sign {

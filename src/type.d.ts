@@ -146,7 +146,7 @@ export declare interface ExpressionModel{
 
   link?:'and'|'or'
   /**
-   * 表达式左边
+   * 表达式左边或单个非关系表达式
    */
   lt:ExpressionSite,
   /**

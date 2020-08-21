@@ -612,7 +612,8 @@ export class MySqlGen {
             sql = `${sql}${groupbyStr}${orderSql}`
         }
 
-        const params = selParam.concat(...fromSqlParam).concat(...whereSqlParam)
+        // const params = selParam.concat(...fromSqlParam).concat(...whereSqlParam)
+        const params = [...selParam, ...fromSqlParam, ...whereSqlParam]
         
         return {sql, params}
     }

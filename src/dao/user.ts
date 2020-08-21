@@ -1,13 +1,13 @@
 // import { useConn, insertIgnorNullValue } from "../common/mariadb";
 import { useConnp } from "@src/common/mysql";
 import _ from "lodash";
-import { user } from "@src/models/table/user";
+import { User } from "@src/models/table/user";
 import { Dao } from "./dao";
 
-export async function addUser(_userObj:Partial<user>){
+export async function addUser(_userObj:Partial<User>){
     const dao = new Dao()
-    let userObj = _.omit(_userObj, ['pwd']) as Partial<user>
-    let u = await dao.addInv(user.name, userObj, { 
+    let userObj = _.omit(_userObj, ['pwd']) as Partial<User>
+    let u = await dao.addInv(User.name, userObj, { 
         set:{
             cdm:[{
                 lt:{p:'$pwd',},
@@ -40,13 +40,13 @@ export async function addUser(_userObj:Partial<user>){
 
 export async function getUserById(id: string){
     const dao = new Dao()
-    const ret = await dao.get(user.name, id)
+    const ret = await dao.get(User.name, id)
     return ret
 }
 
-export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>{
+export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<User>]>{
     const dao = new Dao()
-    const ret = await dao.listWsd(user.name, {
+    const ret = await dao.listWsd(User.name, {
         where:{
             o:{usr},
             cdm:[{

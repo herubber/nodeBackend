@@ -1,5 +1,4 @@
-
-export class Role {
+export class Tag{
     id:string|undefined = undefined
     insertAt?:any= undefined
     updateAt?:any= undefined
@@ -13,8 +12,12 @@ export class Role {
     memo:string|undefined= undefined
 
     state?:number= undefined
-    code?:string= undefined
-    cnName?:string= undefined
-    hkName?:string= undefined
-    enName?:string= undefined
+
+    orgId?:string= undefined
+    orgCode?:string= undefined
+    pointerId?:string= undefined
+    pointerCode?:string= undefined
+    tagType?:string= undefined
+    tagId?:string= undefined
+    rssi?:string= undefined
 }

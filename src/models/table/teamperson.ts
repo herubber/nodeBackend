@@ -1,5 +1,4 @@
-
-export class Role {
+export class Teamperson{
     id:string|undefined = undefined
     insertAt?:any= undefined
     updateAt?:any= undefined
@@ -13,8 +12,12 @@ export class Role {
     memo:string|undefined= undefined
 
     state?:number= undefined
-    code?:string= undefined
-    cnName?:string= undefined
-    hkName?:string= undefined
-    enName?:string= undefined
+
+
+    teamId?:string= undefined
+    teamCode?:string= undefined
+    userId?:string= undefined
+    userCode?:string= undefined
+    isLeader?:number= undefined
+
 }

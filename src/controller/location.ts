@@ -8,7 +8,7 @@ import { redis } from '@src/common/redis';
 import { midNames } from "@src/middleware";
 import { userFields, userFieldsArray } from '@src/models/tableConst';
 import { Dao } from '@src/dao/dao';
-import { user } from '@src/models/table/user';
+import { User } from '@src/models/table/user';
 import _ from 'lodash';
 import { Payload, payloadFieldsArray } from '@src/models/payload';
 // import VError from 'verror';
@@ -37,7 +37,7 @@ export default class Location {
     } else if(cardId && imei){
       //刷卡登陆, 必须 imei 提供
       const dao = new Dao()
-      const ret = await dao.listWsd(user.name,{
+      const ret = await dao.listWsd(User.name,{
           where:{
               o:{cardId, alCardVerify:1},
           }

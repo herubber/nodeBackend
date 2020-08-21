@@ -1,4 +1,4 @@
-import { user } from "./table/user";
+import { User } from "./table/user";
 import { tableInvisible } from "./tableBase";
 import _ from "lodash";
 
@@ -9,10 +9,10 @@ export const invisibleFields:{[name in keyof tableInvisible]:string} = Object.fr
 
 
 
-const u = new user()
+const u = new User()
 export const userFieldsArray = Object.getOwnPropertyNames(u)
-export const userFields:{[name in keyof user]:string} = Object.fromEntries(userFieldsArray.map(a=>[a,a])) as any
+export const userFields:{[name in keyof User]:string} = Object.fromEntries(userFieldsArray.map(a=>[a,a])) as any
 export const userInvisibleFieldsArray = _.intersection(invisibleFieldsArray,userFieldsArray)
-export const userInvisibleFields:{[name in keyof (user|tableInvisible)]:string} = _.pick(userFields,userInvisibleFieldsArray) as any
+export const userInvisibleFields:{[name in keyof (User|tableInvisible)]:string} = _.pick(userFields,userInvisibleFieldsArray) as any
 
 // console.log(userFields)

@@ -1,14 +1,14 @@
 
 export class syslog{
     id:string|undefined = undefined
-    insertAt
+    insertAt?:Date = undefined
     memo:string|undefined = undefined
-    level
-    cat
-    ip
-    imei
-    token
-    class
-    action
-    msg
+    level?:string = undefined
+    cat?:string = undefined
+    ip?:string = undefined
+    imei?:string = undefined
+    token?:string = undefined
+    class?:string = undefined
+    action?:string = undefined
+    msg?:string = undefined
 }

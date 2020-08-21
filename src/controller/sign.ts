@@ -8,7 +8,7 @@ import { redis } from '@src/common/redis';
 import { midNames } from "@src/middleware";
 import { userFields, userFieldsArray } from '@src/models/tableConst';
 import { Dao } from '@src/dao/dao';
-import { user } from '@src/models/table/user';
+import { User } from '@src/models/table/user';
 import _ from 'lodash';
 import { Payload, payloadFieldsArray } from '@src/models/payload';
 // import VError from 'verror';
@@ -35,7 +35,7 @@ export default class Sign {
     } else if (cardId && imei) {
       //刷卡登陆, 必须 imei 提供
       const dao = new Dao()
-      const ret = await dao.listWsd(user.name, {
+      const ret = await dao.listWsd(User.name, {
         where: {o: { 
           cardId, alCardVerify: 1 
         },
@@ -76,7 +76,7 @@ export default class Sign {
     const hash_password = encryptPass(password, salt);
 
     let usr = {
-      usr: 'test', pwd: '123321', code: 'test', roleId: 9477823074, cnName: '的',
+      usr: 'test', pwd: '123321', code: 'test', roleId: '9477823074', cnName: '的',
       hkName: '德', enName: '🉐', age: 22, passport: '93j9f781237412',
       tel: '131313131313', email: 'sd@adfs.com'
     }

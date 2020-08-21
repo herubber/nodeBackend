@@ -5,8 +5,8 @@ import VError from "verror";
 import { ResMd, Err } from "@src/common/comm";
 import { errConst } from "@src/constant";
 import { Dao } from "@src/dao/dao";
-import { role } from "@src/models/table/role";
-import { user } from "@src/models/table/user";
+import { Role } from "@src/models/table/role";
+import { User } from "@src/models/table/user";
 
 
 // 方案1：
