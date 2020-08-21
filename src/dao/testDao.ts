@@ -38,12 +38,42 @@ export async function testSelect(){
                 },
             }]
         }
-    }],undefined,{
+    }],{
         where:{
             o:{
                 "u.id":98731173353619460
             }
         },
+        pagin:{
+            pagesize:1,
+            page:1
+        }
+    })
+    console.log(ret)
+
+    ret = await dao.list([{
+        tb:'user',
+        as:'u'
+    },{
+        tb:'org',
+        as:'o',
+        l:{
+            cdm:[{
+                lt:{
+                    fn:'JSON_CONTAINS',
+                    p:['$u.orgIds','$o.id']
+                },
+            }]
+        }
+    }],{
+        fields:['$u.id', {p:'$o.id',fn:'count'}, {p:'$u.insertAt',fn:'UNIX_TIMESTAMP', as:'ii'}],
+        where:{
+            o:{
+                "u.id":98731173353619460
+            }
+        },
+        groupBy:['$u.id',{p:'$u.insertAt'}],
+        order:[{p:'$u.id', desc:true}],
         pagin:{
             pagesize:1,
             page:1

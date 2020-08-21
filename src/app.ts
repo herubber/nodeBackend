@@ -1,6 +1,6 @@
 
-// require('module-alias/register')
-import 'module-alias/register';
+require('module-alias/register')
+// import 'module-alias/register';
 
 import log from "./common/logger";
 

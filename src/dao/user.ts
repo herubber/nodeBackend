@@ -17,7 +17,7 @@ export async function addUser(_userObj:Partial<user>){
                 }
             }],
         },
-        returning:'*'
+        fields:['*']
     })
     return u.data[0]
 
@@ -46,7 +46,7 @@ export async function getUserById(id: string){
 
 export async function verifyUserByPwd(usr, pwd: string):Promise<[Partial<user>]>{
     const dao = new Dao()
-    const ret = await dao.listWsd(user.name, ['*'],{
+    const ret = await dao.listWsd(user.name, {
         where:{
             o:{usr},
             cdm:[{

@@ -98,9 +98,9 @@ export default class Test extends LikeAspnetMvcController {
             //         obj: { state: 1 },
             //     }
             // })
-            var ret = await dao.listWsd('user', ['*'], {
+            var ret = await dao.listWsd('user', {
                 where: {
-                    obj: { state: 1 },
+                    o: { state: 1 },
                     // cdm: [{
                     //     lt: { p: '$pwd' },
                     //     rt: {
@@ -119,9 +119,9 @@ export default class Test extends LikeAspnetMvcController {
     @post("/test6")
     async test6(ctx: Context) {
         var dao = new Dao()
-        var ret = await dao.listWsd('role', ['*'], {
+        var ret = await dao.listWsd('role', {
             where: {
-                obj: { state: 1 },
+                o: { state: 1 },
             }
         })
         console.log(ret);

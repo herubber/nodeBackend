@@ -192,20 +192,18 @@ export class Dao {
      * @param extra 
      * @param nestTables 
      */
-    async list(tbName: String|UseJoin, field: Array<string>=['*'], extra?: SqlExtra, nestTables?:undefined|boolean|string): Promise<{ data, cnt:number}> {
-        if (!tbName) {
+    async list(tbName: String|UseJoin, _extra?: SqlExtra, nestTables?:undefined|boolean|string): Promise<{ data, cnt:number}> {
+        if (!tbName || !tbName.length) {
             throw 'tbName必须提供'
         }
-        if (!field.length && !extra?.select?.rawSelect && extra?.select?.invisibleField?.length) {
-            throw '没有提供需要查询的field'
-        }
 
-        let {sql, params} = this.sqlGen.genSelect(tbName, field, extra)
+        let extra = Object.assign({fields:['*']},_extra) 
+        let {sql, params} = this.sqlGen.genSelect(tbName, extra)
 
         let qryOpt = sql
         if(nestTables){
             qryOpt = {sql, nestTables}
-        }else if(field.includes('*') && Array.isArray(tbName) && tbName.length>1 ){
+        }else if(extra.fields?.includes('*') && Array.isArray(tbName) && tbName.length>1 ){
             nestTables=true
             qryOpt = {sql, nestTables}
         }
@@ -215,7 +213,7 @@ export class Dao {
         if(nestTables===true){
             data = data.map(d=>({...d}))
         }
-        if(extra?.pagin){
+        if(extra.pagin){
             let [[{count}]] = await conn.query(this.sqlGen.countSql)
             cnt = count
         }
@@ -230,7 +228,7 @@ export class Dao {
      * @param field 字段列表
      * @param extra 扩展查询
      */
-    async listWsd(tbName: String|UseJoin, field: Array<string>=['*'], extra?: SqlExtra): Promise<{ data, cnt:number }> {
+    async listWsd(tbName: String|UseJoin, extra?: SqlExtra): Promise<{ data, cnt:number }> {
         extra = _.mergeWith(extra, {
             where:{
                 cdm:[{
@@ -244,7 +242,7 @@ export class Dao {
             return o.concat(s)
         })
 
-        let ret = await this.list(tbName, field, extra)
+        let ret = await this.list(tbName, extra)
         
         return ret
     }

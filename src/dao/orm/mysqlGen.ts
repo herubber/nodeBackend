@@ -1,8 +1,8 @@
-import { SqlExtra, LinkBlock, /*CondictionModel,*/ ExpressionModel, ExpressionSite, UseJoin, ExpressionGroup, JoinModel } from "@src/type"
+import { SqlExtra, LinkBlock, /*CondictionModel,*/ ExpressionModel, ExpressionSite, UseJoin, ExpressionGroup, JoinModel, Fields } from "@src/type"
 import { conditionRelation } from "@src/constant"
 import _, { groupBy } from "lodash"
 import vError from 'verror'
-const mysql = require('mysql')
+import * as mysql from 'mysql';
 import {PoolConnection, mysqlModule} from 'promise-mysql'
 import { invisibleFieldsArray } from "@src/models/tableConst"
 import { jwtVerify } from "@src/middleware"
@@ -12,13 +12,13 @@ export interface SqlGen{
     genDelete(tbName:String, extra: SqlExtra)
     genInsert<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra)
     genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra)
-    genSelect(tbName: String|UseJoin, fields: Array<string>, extra?: SqlExtra)
+    genSelect(tbName: String|UseJoin, extra?: SqlExtra)
     genGetById(tbName: String, id:string, fields?:string[], showExtraField?:boolean)
     genGetByWhereObj(tbName: String, obj:object, fields?:string[], showExtraField?:boolean)
     countSql:string
 }
 
-// // import * as mysql from 'mysql';
+
 // let connection= <PoolConnection>{} ;
 // let mysql = <mysqlModule>{};
 // // escapeId 喺 ??
@@ -46,13 +46,8 @@ export class MySqlGen {
 
     public static countSql = 'SELECT FOUND_ROWS() count'
 
-    public static pagin(sql:string, page:number, pagesize:number, orderBy?:string){
+    public static pagin(sql:string, page:number, pagesize:number, groupBy:string, orderBy:string){
         let retSql = sql.trim()
-
-        let orderSql=''
-        if(orderBy){
-            orderSql = `order by ${orderBy}`
-        }
         
         let paginSelSql = ''
         let paginSql = ''
@@ -62,9 +57,7 @@ export class MySqlGen {
         
         if(retSql.startsWith('select')){
             retSql = retSql.replace('select','select '+ paginSelSql)
-            return `${retSql}
-${orderSql} 
-${paginSql}`
+            return `${retSql}\n${groupBy}\n${orderBy}\n${paginSql}`
         }else{
             throw new vError({
                 name: 'noimplimentation',
@@ -74,28 +67,73 @@ ${paginSql}`
 
     }
 
-    /**
-     * 构建group by 语句块, 后面重构构建者模式 作准备
-     * @param extra 扩展对象 @link :SqlExtra
-     */
-    public static buildGroupBy(extra?:SqlExtra):string {
-        if(!extra)
-            return ''
-        let gps = []
-        if(extra.groupBy){
-            if(Array.isArray(extra.groupBy.rawGroupBy)){
-                Array.prototype.push.apply(gps,extra.groupBy.rawGroupBy)
-            }else if (typeof extra.groupBy.rawGroupBy === 'string'){
-                gps.push(extra.groupBy.rawGroupBy)
-            }
-        }
-        if(gps.length>0){
-            return 'group by' + gps.join(',')
+
+    private static specialString(field:string, notSpecial){
+        let sql
+        let params:any[]=[] 
+        if(field.startsWith('$$')){
+            // 隐藏之 raw field 句式
+            let rawField = field.slice(2)
+            this.checkSqlDangerAndThrowError(rawField)
+            sql = rawField
+        }else if(field.startsWith('$')){
+            // 字段句式,因为是fields,本来就是字段,没必要家,如果加了还是容错一下曲调
+            params.push(field.slice(1))
+            sql = '??'
         }else{
-            return ''
+            let [nsSql, nsParams] = notSpecial(field)
+            params.push(...nsParams)
+            sql = nsSql //'??'
         }
+        return [sql, params]
     }
 
+    public static buildFields(_fields:Array<string|ExpressionSite>){
+        let sqlArr:any[] = []
+        let params:any[] = []
+        let fields = _fields.map(f=>{
+            if(typeof f === 'string'){
+                return f.trim()
+            }else{
+                return f
+            }
+        })
+        // 如果有 select * 之类的情况,mysql语法要求必须把*放第一位,不然其他字段必须家别名或表名引导出来
+        if(fields.includes('*')){
+            _.remove(fields,e=>e=='*')
+            sqlArr.push('*')
+        }
+        fields.forEach(field=>{
+            if(typeof field ==='string'){
+                // 字符串
+                let [ssql, sparams] = this.specialString(field,f=> ['??', [f]])
+                sqlArr.push(ssql)
+                params.push(...sparams)
+            }else{
+                //site表达式
+                let [innerSqls, innerParam] = this.buildSite(field)
+                sqlArr.push(...innerSqls)
+                params.push(...innerParam)
+            }
+        })
+        return [sqlArr,params]
+    }
+
+    /**
+     * 构建group by 语句块, 后面重构构建者模式 作准备
+     * @param fields string|ExpressionSite数组 @link :Fields
+     */
+    public static buildGroupBy(fields:Fields):string {
+        let [sqls, params] = this.buildFields(fields)
+        let ret = mysql.format(sqls.join(','),params)
+        return ret
+    }
+
+    public static buildOrderBy(fields:Fields):string {
+        let [sqls, params] = this.buildFields(fields)
+        let ret = mysql.format(sqls.join(','),params)
+        return ret
+    }
 
     /**
      * $开头表示字段名
@@ -128,17 +166,20 @@ ${paginSql}`
                 // },'表达式嵌套功能暂不支持', {})
             }
             //如果参数是字段
-            if(typeof s.p === 'string' && s.p.startsWith('$')){
-                placeholder = '??'
-                params.push(s.p.slice(1))
+            if(typeof s.p === 'string'){
+                let [ssql, sparams] = this.specialString(s.p,f=> ['??', [f]])
+                
+                placeholder = ssql
+                params.push(...sparams)
             } else if (Array.isArray(s.p)){
                 // 一个site如果p是数组,这种情况应该是fn(,...)
                 placeholder =s.p.map(p=>{
 
                     // 这里好像可以递归buildSite
-                    if(typeof p === 'string' && p.startsWith('$')){
-                        params.push(p.slice(1))
-                        return '??'
+                    if(typeof p === 'string'){
+                        let [ssql, sparams] = this.specialString(p,f=> ['?', [f]])
+                        params.push(...sparams)
+                        return ssql
                     } else if(Array.isArray(p)){
                         let [innerSqls, innerParam] = this.buildSite(p)
                         params.push(...innerParam)
@@ -159,20 +200,33 @@ ${paginSql}`
                 params.push(s.p)
             }
 
+
+            let pSql
             if(s.fn){
                 this.checkSqlDangerAndThrowError(s.fn)
-                    
-                sql.push(`${s.fn}(${placeholder})`)
+                pSql = `${s.fn}(${placeholder})`
             } else {
-                sql.push(`${placeholder}`)
+                pSql = `${placeholder}`
             }
+
+            if(s.as){
+                pSql += ' as ??'
+                params.push(s.as)
+            }
+            if(s.desc){
+                pSql += ' desc'
+            }
+
+            sql.push(pSql)
         });
 
         return [sql,params]
     }
 
     private static checkSqlSiteAndThrowError(okayCondition:boolean){
-        if(okayCondition){}
+        if(okayCondition){
+            return true
+        }
         else{
             throw new vError({
                 name: 'errorSql',
@@ -398,8 +452,8 @@ ${paginSql}`
             setSql.push(extra.set.rawSet)
         }
         let setSqlStr = setSql.join(',')
-        if(extra?.returning){
-            sql = `${sql} set ${setSqlStr} returning ${extra.returning}`
+        if(extra?.fields){
+            sql = `${sql} set ${setSqlStr} returning ${extra.fields.join(',')}`
         }else{
             sql = `${sql} set ${setSqlStr}`
         }
@@ -464,6 +518,8 @@ ${paginSql}`
         joinArr.forEach((jt,idx) => {
             // raw string
             if(typeof jt === 'string'){
+                // 好像没必要每次检查,最后检查一次 性能好点,
+                this.checkSqlDangerAndThrowError(jt)
                 joinSqlStr += jt
                 return
             } 
@@ -489,13 +545,15 @@ ${paginSql}`
                 joinSqlStr += `?? ${as}\n`
             }
         });
+        // 最后检查一次
+        // this.checkSqlDangerAndThrowError(joinSqlStr)
         return [joinSqlStr, joinParams]
     }
 
-    public static genSelect(tbName: String|UseJoin, field: Array<string>, extra?: SqlExtra){
-        this.checkSqlSiteAndThrowError(!!tbName)
+    public static genSelect(tbName: String|UseJoin, extra: SqlExtra){
+        this.checkSqlSiteAndThrowError(!!tbName.length)
 
-        let fields = _.cloneDeep(field)
+        // let fields = _.cloneDeep(field)
 
         let fromSql = ''
         let fromSqlParam: Array<any> = []
@@ -508,50 +566,50 @@ ${paginSql}`
             fromSqlParam = <any[]>joinParams
         }
 
-
-        let selParam:any[] = []
-        let selSql:any[] = []
-        if(fields.length){
-            let startField = _.remove(fields,f=>f.trim()=='*')
-            if(fields.length){
-                selSql.push('??')
-                selParam.push(fields.map(f=>`${f}`))
-            }
-            if(startField.length){
-                selSql.push(`*`)
-            }
-        }
-        if(extra?.select?.invisibleField?.length){
-            selSql.push('??')
-            selParam.push(fields.map(f=>`${f}`))
-        }
-        if(extra?.select?.rawSelect){
-            selSql.push(extra.select.rawSelect)
-        }
+        // let selParam:any[] = []
+        // let selSql:any[] = []
+        this.checkSqlSiteAndThrowError(!!extra?.fields?.length)
+        
+        let [selSql, selParam] = this.buildFields(<Fields>extra.fields)
+        // if(fields.length){
+        //     let startField = _.remove(fields,f=>f.trim()=='*')
+        //     if(fields.length){
+        //         selSql.push('??')
+        //         selParam.push(fields.map(f=>`${f}`))
+        //     }
+        //     if(startField.length){
+        //         selSql.push(`*`)
+        //     }
+        // }
+        // if(extra?.select?.invisibleField?.length){
+        //     selSql.push('??')
+        //     selParam.push(fields.map(f=>`${f}`))
+        // }
+        // if(extra?.select?.rawSelect){
+        //     selSql.push(extra.select.rawSelect)
+        // }
 
         let [whereSqlStr, whereSqlParam] = this.buildLink(extra?.where)
-        let sql = `select ${selSql.join(',')}
-${fromSql}where ${whereSqlStr}`
+        let sql = `select ${selSql.join(',')}\n${fromSql}where ${whereSqlStr}`
         // ${orderSql}
         // ${paginSql}
         
         let orderSql=''
         if(extra?.order){
-            orderSql = `${extra.order.rawOrder.join(',')} ${!!extra.order.desc && 'desc'}`
+            orderSql = `order by ${this.buildOrderBy(extra.order)}`
         }
-        
+
         // let paginSelSql = ''
         // let paginSql = ''
         
-        let groupbyStr = this.buildGroupBy(extra)
+        let groupbyStr = ''
+        if(extra.groupBy){
+            groupbyStr = `group by ${this.buildGroupBy(extra.groupBy)}`
+        }
         if(extra?.pagin){
-            sql = this.pagin(sql, extra.pagin.page, extra.pagin.pagesize, orderSql)
+            sql = this.pagin(sql, extra.pagin.page, extra.pagin.pagesize, groupbyStr, orderSql)
         }else{
-            if(orderSql){
-                sql = `${sql} 
-${groupbyStr}
-order by ${orderSql}`
-            }
+            sql = `${sql}${groupbyStr}${orderSql}`
         }
 
         const params = selParam.concat(...fromSqlParam).concat(...whereSqlParam)

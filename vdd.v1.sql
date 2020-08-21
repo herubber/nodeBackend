@@ -43,6 +43,21 @@ INSERT INTO sysdict(catgroy, memo, dict) VALUES('ROUTE_TYPE', '巡更线路类�
 INSERT INTO sysdict(catgroy, memo, dict) VALUES('TAG_TYPE', 'tag类型', JSON_ARRAY('NFC', 'beacon') );
 
 
+# 检查值是否在字典存在, select checkindictarr('TAG_TYPE', 'NFC')
+create OR REPLACE FUNCTION checkindictarr(catgroy varchar(50), v varchar(50)) # RETURNS INT
+RETURNS INT
+BEGIN
+return (
+  select JSON_CONTAINS(d.dict, JSON_QUOTE(v))
+    from sysdict d
+    where d.catgroy=catgroy 
+      and d.state=1
+    limit 1
+    );
+END;
+
+
+
 # 系统用户/雇员
 CREATE or REPLACE TABLE user(
   id BIGINT unsigned default(uuid_short()) COMMENT '主键',
@@ -297,29 +312,15 @@ CREATE or replace TABLE pointer(
   beaconIds json COMMENT '对应beacon标签的id,json数组[{id,rssi}]',
   beaconLimit int default 0 COMMENT '在beaconIds最少多少个可以确定',
 
-  routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
-  routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
-  sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
-  minMinute INT default 0 COMMENT '当前点最小到达分钟数',
-  maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
+  -- routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
+  -- routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
+  -- sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
+  -- minMinute INT default 0 COMMENT '当前点最小到达分钟数',
+  -- maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
 
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
-
-
-# 检查值是否在字典存在, select checkindictarr('TAG_TYPE', 'NFC')
-create OR REPLACE FUNCTION checkindictarr(catgroy varchar(50), v varchar(50)) # RETURNS INT
-RETURNS INT
-BEGIN
-return (
-  select JSON_CONTAINS(d.dict, JSON_QUOTE(v))
-    from sysdict d
-    where d.catgroy=catgroy 
-      and d.state=1
-    limit 1
-    );
-END;
 
 
 
@@ -401,8 +402,8 @@ CREATE or replace TABLE router(
   PRIMARY KEY (id)
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
-CREATE or replace TRIGGER router_routertype_insertcheck 
-BEFORE INSERT ON tag FOR EACH ROW
+CREATE or replace TRIGGER router_column_insertcheck 
+BEFORE INSERT ON router FOR EACH ROW
 BEGIN
   IF checkindictarr('ROUTE_TYPE', NEW.routerType)!=1 THEN
     set @message_text = concat('routerType must be in ROUTE_TYPE dict, but value is ', NEW.routerType);
@@ -410,8 +411,8 @@ BEGIN
   END IF;
 END;
 
-CREATE or replace TRIGGER router_routertype_updatecheck 
-BEFORE UPDATE ON tag FOR EACH ROW
+CREATE or replace TRIGGER router_column_updatecheck 
+BEFORE UPDATE ON router FOR EACH ROW
 BEGIN
   IF checkindictarr('ROUTE_TYPE', NEW.routerType)!=1 THEN
     set @message_text = concat('routertype must be in ROUTE_TYPE dict, but value is ', NEW.routerType);
@@ -420,33 +421,33 @@ BEGIN
 END;
 
 -- # 固定路线,由多个pointer构成
--- CREATE or replace TABLE routerpoint(
---   id BIGINT unsigned default(uuid_short()) COMMENT '主键',
---   insertAt timestamp DEFAULT(CURRENT_TIMESTAMP) INVISIBLE COMMENT '新增时间',
---   updateAt timestamp NULL ON UPDATE CURRENT_TIMESTAMP INVISIBLE COMMENT '更新时间',
---   deleteAt timestamp NULL INVISIBLE COMMENT '删除时间',
---   insertBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '新增人,user表id,0 代表系统操作或数据库直接操作',
---   updateBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '更新人,user表id,0 代表系统操作或数据库直接操作',
---   deleteBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '删除人,user表id,0 代表系统操作或数据库直接操作',
---   insertByCode varchar(50) INVISIBLE COMMENT '冗余,新增人,user表code',
---   updateByCode varchar(50) INVISIBLE COMMENT '冗余,更新人,user表code',
---   deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
---   memo varchar(200) COMMENT '备注',
---   state int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结',
+CREATE or replace TABLE routerpoint(
+  id BIGINT unsigned default(uuid_short()) COMMENT '主键',
+  insertAt timestamp DEFAULT(CURRENT_TIMESTAMP) INVISIBLE COMMENT '新增时间',
+  updateAt timestamp NULL ON UPDATE CURRENT_TIMESTAMP INVISIBLE COMMENT '更新时间',
+  deleteAt timestamp NULL INVISIBLE COMMENT '删除时间',
+  insertBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '新增人,user表id,0 代表系统操作或数据库直接操作',
+  updateBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '更新人,user表id,0 代表系统操作或数据库直接操作',
+  deleteBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '删除人,user表id,0 代表系统操作或数据库直接操作',
+  insertByCode varchar(50) INVISIBLE COMMENT '冗余,新增人,user表code',
+  updateByCode varchar(50) INVISIBLE COMMENT '冗余,更新人,user表code',
+  deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
+  memo varchar(200) COMMENT '备注',
+  state int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结',
 
---   orgId BIGINT UNSIGNED COMMENT '冗余,机构id,对应org表id',
---   orgCode varchar(50) COMMENT '冗余, 机构code,对应org表code',
---   routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
---   routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
---   pointerId BIGINT UNSIGNED COMMENT '地标,点的id,对应pointer表id',
---   pointerCode varchar(50) COMMENT '冗余, 地标code,对应pointer表code',
+  orgId BIGINT UNSIGNED COMMENT '冗余,机构id,对应org表id',
+  orgCode varchar(50) COMMENT '冗余, 机构code,对应org表code',
+  routerId BIGINT UNSIGNED COMMENT '路线id,对应router表id',
+  routerCode varchar(50) COMMENT '冗余, 路线code,对应router表code',
+  pointerId BIGINT UNSIGNED COMMENT '地标,点的id,对应pointer表id',
+  pointerCode varchar(50) COMMENT '冗余, 地标code,对应pointer表code',
   	
---   sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
---   minMinute INT default 0 COMMENT '当前点最小到达分钟数',
---   maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
+  sort INT default 0 COMMENT '序号, 同一线路routerId,多个点的排序',
+  minMinute INT default 0 COMMENT '当前点最小到达分钟数',
+  maxMinute INT default 0 COMMENT '当前点最大到达分钟数',
   	
---   PRIMARY KEY (id)
--- ) ENGINE = InnoDB CHARACTER SET = utf8mb4;
+  PRIMARY KEY (id)
+) ENGINE = InnoDB CHARACTER SET = utf8mb4;
 
 
 
@@ -770,6 +771,11 @@ create or replace table sos(
 #2020-09-03
 ALTER TABLE `ipatrol`.`patrolaction` 
 ADD COLUMN `userId` bigint(20) NULL COMMENT '哪个user的巡逻,对应user表id' AFTER `situation`;
+
+
+#2020-08-20
+ALTER TABLE `ipatrol`.`user` 
+ADD COLUMN `roleCode` varchar(50) COMMENT '冗余发送的角色的code,对应role表code';
 
 
 # 报表订阅,先研究下 jasperreport 看看需要什么参数字段等

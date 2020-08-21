@@ -66,31 +66,27 @@ export declare interface LinkBlock{
   raw?:string
 }
 
-
+export type Fields = Array<string|ExpressionSite>
 
 export declare interface SqlExtra{
-  returning?:string,
+  //returning?:string,
+  fields?:Fields
   set?:{
     // cdm?:Array<CondictionModel>,
     cdm?:Array<ExpressionModel>,
     rawSet?:string
-  },
-  select?:{
-    invisibleField?:Array<string>,
-    rawSelect?:string
-  },
-  where?:LinkBlock,
-  order?:{
-    desc?:boolean,
-    rawOrder:string[],
-  },
+  }
+  // select?:{
+  //   invisibleField?:Array<string>,
+  //   rawSelect?:string
+  // },
+  where?:LinkBlock
+  order?:Fields
   pagin?:{
     pagesize:number,
     page:number,
-  },
-  groupBy?:{
-    rawGroupBy:string[]
   }
+  groupBy?:Fields
 }
 
 
@@ -122,11 +118,17 @@ export declare interface ExpressionSite{
    * 可以是任何值
    * 暂时不可以是表达式本身,完善后可以用表达式本身,组织表达式树,递归嵌套解释表达式生成
    */
-  p:ExpressionSiteParam|Array<ExpressionSiteParam>,
+  p:ExpressionSiteParam|Array<ExpressionSiteParam>
+
+  as?:string
+  /**
+   * use in order, asc if false but desc
+   */
+  desc?:boolean
   /**
    * 函数名,如果有
    */
-  fn?:string,
+  fn?:string
   /**
    * todo: 如果fn带over, 未实现8-12
    */
@@ -153,15 +155,12 @@ export declare interface ExpressionModel{
    */
   rt?:ExpressionSite|Array<ExpressionSite>,
   /**
-   * 暂时想到between关系表达式右边带2个
-   */
-  /**
    * 关系
    */
   r?:keyof ConditionRelation
 }
 
-type joinType = '$join'|'$left'|'$right'
+// type joinType = '$join'|'$left'|'$right'
 // type joinType = ['$join','$left','$right']
 // declare type joinType = {
 //   l:'left join',
