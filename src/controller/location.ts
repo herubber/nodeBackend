@@ -11,8 +11,8 @@ import { Dao } from '@src/dao/dao';
 import { User } from '@src/models/table/user';
 import _ from 'lodash';
 import { Payload, payloadFieldsArray } from '@src/models/payload';
+import { errCode } from '@src/constant';
 // import VError from 'verror';
-import { errConst, newErr } from "@src/constant";
 
 const makeSalt = () => Math.round((new Date().valueOf() * Math.random())) + '';//generate salt
 const encryptPass = (pass: string, salt: string) => crypto.createHash('md5').update(pass + salt).digest('hex');// generate md5
@@ -44,12 +44,12 @@ export default class Location {
       })
       users = ret.data
     } else{
-      throw newErr(errConst.apiParamsErr)
+      throw ctx.newErr(errCode.apiParamsErr)
 
     }
 
     if (!users.length) {
-      throw newErr(errConst.userOrPwdErr)
+      throw ctx.newErr(errCode.userOrPwdErr)
     }
     // const users = await dao.getUser({ email });
     let lgUsr = users[0]

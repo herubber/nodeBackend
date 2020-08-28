@@ -93,6 +93,7 @@ export const jwtVerify: MiddleWare = (isVerify: boolean = true, autorefreshExp =
       }
       //通过 jwt 校验, 转入下一个中间件
       if (ctx.state.token && next) {
+        ctx.state.user = await redis.hgetall('user:'+ctx.state.token.id)
         await next();
       }
     }

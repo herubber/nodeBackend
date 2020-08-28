@@ -2,12 +2,13 @@ import { routerMap, get, post } from "@src/decorator/controller";
 import { Context } from "koa";
 import { verifyUserByPwd } from "@src/dao/user";
 import { Err, t, ResMd } from "@src/common/comm";
-import { errConst } from "@src/constant";
+
 import _ from "lodash";
 import { payloadFieldsArray, Payload } from "@src/models/payload";
 import { redis } from "@src/common/redis";
 import { changePwd } from "@src/bll/auth";
 import { VError } from "verror";
+import { eCodeStr, errCode } from "@src/constant";
 
 @routerMap('/api/auth')
 export default class Auth {
@@ -23,10 +24,13 @@ export default class Auth {
             users = await verifyUserByPwd(username, password)
         }
         else {
-            throw await Err(errConst.apiParamsErr, ctx, lang)
+            // throw await Err(errConst.apiParamsErr, ctx, lang)
+            throw new Error(eCodeStr(errCode.apiParamsErr));
         }
         if (!users.length) {
-            throw await Err(errConst.userOrPwdErr, ctx, lang)
+            // throw await Err(errConst.userOrPwdErr, ctx, lang)
+            throw new Error(eCodeStr(errCode.userOrPwdErr));
+            
         }
         let lgUsr = users[0]
         // let lgUsr = users
@@ -56,7 +60,8 @@ export default class Auth {
                 throw new VError(await t('Fail', ctx) + '(data.affectedRows=' + affectedRows + ')');
             }
         } else {
-            throw await Err(errConst.apiParamsErr, ctx)
+            // throw await Err(errConst.apiParamsErr, ctx)
+            throw new Error(eCodeStr(errCode.apiParamsErr));
         }
     }
 

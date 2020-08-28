@@ -777,6 +777,30 @@ ADD COLUMN `userId` bigint(20) NULL COMMENT '哪个user的巡逻,对应user表id
 ALTER TABLE `ipatrol`.`user` 
 ADD COLUMN `roleCode` varchar(50) COMMENT '冗余发送的角色的code,对应role表code';
 
+#2020-08-25
+ALTER TABLE `ipatrol`.`device` 
+CHANGE COLUMN `orgId` `orgIds` json NULL COMMENT 'json数组的机构id,对应org表id' AFTER `memo`,
+CHANGE COLUMN `orgCode` `orgCodes` json NULL COMMENT '冗余, 机构code,对应org表code' AFTER `orgIds`,
+ADD COLUMN `state` int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结';
+
+
+# 设置设备的orgIds授权的NFC
+create table setdevicenfc(
+  id BIGINT unsigned primary key default(uuid_short()) COMMENT '主键',
+  insertAt timestamp DEFAULT(CURRENT_TIMESTAMP) INVISIBLE COMMENT '新增时间',
+  updateAt timestamp NULL ON UPDATE CURRENT_TIMESTAMP INVISIBLE COMMENT '更新时间',
+  deleteAt timestamp NULL INVISIBLE COMMENT '删除时间',
+  insertBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '新增人,user表id,0 代表系统操作或数据库直接操作',
+  updateBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '更新人,user表id,0 代表系统操作或数据库直接操作',
+  deleteBy BIGINT UNSIGNED DEFAULT 0 INVISIBLE COMMENT '删除人,user表id,0 代表系统操作或数据库直接操作',
+  insertByCode varchar(50) INVISIBLE COMMENT '冗余,新增人,user表code',
+  updateByCode varchar(50) INVISIBLE COMMENT '冗余,更新人,user表code',
+  deleteByCode varchar(50) INVISIBLE COMMENT '冗余,删除人,user表code',
+  memo varchar(200) COMMENT '备注',
+  state int default 1 COMMENT '状态 0待审核, 1正常/使用, 2停用/冻结',
+  tagId varchar(50) COMMENT 'NFC标签ID',
+  orgIds json COMMENT 'json数组,设置所属机构,集团机构'
+)
 
 # 报表订阅,先研究下 jasperreport 看看需要什么参数字段等
 

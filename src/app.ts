@@ -21,7 +21,7 @@ import { addRouter } from './router/index.js'
 import { addControllerRouter } from "./controllerRouter";
 // import rediskoa from "ioredis-koa";
 
-import errorHandler from "./middleware/error";
+import errorHandler, { i18nError } from "./middleware/error";
 import { signMethod } from "./middleware/verify";
 
 import { app as appCfg } from "./config";
@@ -186,6 +186,7 @@ app.use(cors({
 app.use(actionLog())
 
 // handle the error
+app.use(i18nError());
 app.use(errorHandler());
 
 // set ctx.sign method 

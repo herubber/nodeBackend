@@ -9,13 +9,17 @@ import { jwtVerify } from "@src/middleware"
 
 
 export interface SqlGen{
-    genDelete(tbName:String, extra: SqlExtra)
-    genInsert<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra)
-    genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra)
-    genSelect(tbName: String|UseJoin, extra?: SqlExtra)
-    genGetById(tbName: String, id:string, fields?:string[], showExtraField?:boolean)
-    genGetByWhereObj(tbName: String, obj:object, fields?:string[], showExtraField?:boolean)
+    genDelete(tbName:string, extra: SqlExtra)
+    genInsert<T>(tbName: string, obj?: Partial<T>, extra?: SqlExtra)
+    genUpdate<T>(tbName: string, setObj?: Partial<T>, extra?: SqlExtra)
+    genSelect(tbName: string|UseJoin, extra?: SqlExtra)
+    genGetById(tbName: string, id:string, fields?:string[], showExtraField?:boolean)
+    genGetByWhereObj(tbName: string, obj:object, fields?:string[], showExtraField?:boolean)
     countSql:string
+    /**
+     * use camelCase ?
+     */
+    camelCase?:boolean
 }
 
 
@@ -42,9 +46,25 @@ function isEmptyArray(arr):boolean{
 const sqlDangerRegx = /[-|#|@|$|/|;|\\]/
 export const identityField = 'id'
 export class MySqlGen {
-
-
+    /**
+     * 默认开启camelCase
+     */
+    public static camelCase = true
+    
+    public static waitSecond = 0
     public static countSql = 'SELECT FOUND_ROWS() count'
+
+    /**
+     * camelCase val
+     * @param val 字符串
+     */
+    private static cc(val:string){
+        if(this.camelCase){
+            return _.camelCase(val)
+        }else{
+            return val
+        }
+    }
 
     public static pagin(sql:string, page:number, pagesize:number, groupBy:string, orderBy:string){
         let retSql = sql.trim()
@@ -167,7 +187,7 @@ export class MySqlGen {
             }
             //如果参数是字段
             if(typeof s.p === 'string'){
-                let [ssql, sparams] = this.specialString(s.p,f=> ['??', [f]])
+                let [ssql, sparams] = this.specialString(s.p,f=> ['?', [f]])
                 
                 placeholder = ssql
                 params.push(...sparams)
@@ -415,7 +435,7 @@ export class MySqlGen {
         return [linkSqlStr, linkSqlParam]
     }
 
-    public static genInsert<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra){
+    public static genInsert<T>(tbName: string, obj?: Partial<T>, extra?: SqlExtra){
         let sql = `INSERT INTO ?? `
         let params: Array<any> = [tbName]
 
@@ -462,7 +482,7 @@ export class MySqlGen {
 
 
 
-    public static genGetById(tbName: String, id:string, fields:string[]=['*'], showExtraField:boolean=false){
+    public static genGetById(tbName: string, id:string, fields:string[]=['*'], showExtraField:boolean=false){
         let eFields = ''
         let params:any[]=[]
         if(showExtraField){
@@ -473,8 +493,12 @@ export class MySqlGen {
         let fieldStr = fields.join(',')
         this.checkSqlDangerAndThrowError(fieldStr)
         let sql = `select ${fieldStr}${eFields} from ?? where ${identityField} = ?`
-        params.push(tbName)
+        
+        params.push(this.cc(tbName))
         params.push(id)
+        if(this.waitSecond>=0){
+            sql = `${sql} for update wait ${this.waitSecond}`
+        }
         return {sql, params}
     }
 
@@ -489,8 +513,11 @@ export class MySqlGen {
         let fieldStr = fields.join(',')
         this.checkSqlDangerAndThrowError(fieldStr)
         let sql = `select ${fieldStr}${eFields} from ?? where ?`
-        params.push(tbName)
+        params.push(this.cc(tbName))
         params.push(obj)
+        if(this.waitSecond>=0){
+            sql = `${sql} for update wait ${this.waitSecond}`
+        }
         return {sql, params}
     }
 
@@ -520,15 +547,15 @@ export class MySqlGen {
             if(typeof jt === 'string'){
                 // 好像没必要每次检查,最后检查一次 性能好点,
                 this.checkSqlDangerAndThrowError(jt)
-                joinSqlStr += jt
+                joinSqlStr += this.cc(jt)+'\n'
                 return
             } 
 
-            joinParams.push(jt.tb)
+            joinParams.push(this.cc(jt.tb))
             let as=''
             if(jt.as){
                 as = `as ??`
-                joinParams.push(jt.as)
+                joinParams.push(this.cc(jt.as))
             }
             if(idx>0){
                 let [joinTypeKey,joinType]=this.getJoinType(jt)
@@ -550,7 +577,7 @@ export class MySqlGen {
         return [joinSqlStr, joinParams]
     }
 
-    public static genSelect(tbName: String|UseJoin, extra: SqlExtra){
+    public static genSelect(tbName: string|UseJoin, extra: SqlExtra){
         this.checkSqlSiteAndThrowError(!!tbName.length)
 
         // let fields = _.cloneDeep(field)
@@ -559,7 +586,7 @@ export class MySqlGen {
         let fromSqlParam: Array<any> = []
         if(typeof tbName === 'string'){
             this.checkSqlDangerAndThrowError(tbName)
-            fromSql = `from ${tbName}\n`
+            fromSql = `from ${this.cc(tbName)}\n`
         } else if(Array.isArray(tbName)) {
             let [joinSqlStr, joinParams] = this.buildJoin(tbName)
             fromSql = `from ${joinSqlStr}`
@@ -612,6 +639,10 @@ export class MySqlGen {
             sql = `${sql}${groupbyStr}${orderSql}`
         }
 
+        if(this.waitSecond>=0){
+            sql = `${sql} for update wait ${this.waitSecond}`
+        }
+
         // const params = selParam.concat(...fromSqlParam).concat(...whereSqlParam)
         const params = [...selParam, ...fromSqlParam, ...whereSqlParam]
         
@@ -619,7 +650,7 @@ export class MySqlGen {
     }
 
 
-    public static genUpdate<T>(tbName: String, setObj?: Partial<T>, extra?: SqlExtra){
+    public static genUpdate<T>(tbName: string, setObj?: Partial<T>, extra?: SqlExtra){
         let obj = setObj
         let whereExtra = extra?.where
         if(setObj && setObj[identityField]){
@@ -651,7 +682,7 @@ export class MySqlGen {
     }
 
 
-    public static genDelete(tbName:String, extra: SqlExtra){
+    public static genDelete(tbName:string, extra: SqlExtra){
         let [whereSqlStr, whereSqlParam] = this.buildLink(extra.where)
         this.checkSqlSiteAndThrowError( !!whereSqlStr)
 

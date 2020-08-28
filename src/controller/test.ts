@@ -3,10 +3,11 @@ import { get, routerMap, post } from '../decorator/controller';
 import { ResData } from "@src/type";
 import VError from "verror";
 import { ResMd, Err } from "@src/common/comm";
-import { errConst } from "@src/constant";
+
 import { Dao } from "@src/dao/dao";
 import { Role } from "@src/models/table/role";
 import { User } from "@src/models/table/user";
+import { errCode, eCodeStr } from "@src/constant";
 
 
 // 方案1：
@@ -112,7 +113,9 @@ export default class Test extends LikeAspnetMvcController {
             })
             ctx.body = new ResMd(ret.data)
         } else {
-            throw await Err(errConst.apiParamsErr, ctx);
+            throw new Error(eCodeStr(errCode.apiParamsErr));
+            
+            // throw await Err(errConst.apiParamsErr, ctx);
         }
     }
 

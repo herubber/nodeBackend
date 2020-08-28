@@ -1,8 +1,9 @@
 import { Context, Next } from "koa"
-import { ConditionRelation } from './constant'
+import { ConditionRelation, errCode } from './constant'
 import { PoolConnection } from "promise-mysql";
 import { Dao } from "./dao/dao";
 import { Payload } from "./models/payload";
+import VError from "verror";
 
 
 declare module "koa" {
@@ -13,7 +14,8 @@ declare module "koa" {
         scodeSign?: (uid: string) => any;
         newTransDao : () => Promise<void>;
         // mysqlTransConn?:PoolConnection
-        mysqlTransDao?:Dao
+        mysqlTransDao?:Dao;
+        newErr : (err:errCode,param?:any[],info?:{[key: string]: any})=>VError
         // [name:string]:any
     }
 }

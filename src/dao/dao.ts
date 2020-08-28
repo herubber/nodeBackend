@@ -10,9 +10,12 @@ const sDelField = 'deleteAt'
 
 export class Dao {
 
+   
+
     public conn: pmysql.PoolConnection | undefined
     private isTrans = false
     sqlGen: SqlGen = MySqlGen
+    
     // get async conn() {
     //     return await getPoolp()
     // }
@@ -24,8 +27,10 @@ export class Dao {
     //     return new Dao(_conn)
     // }
     constructor(
-        _conn?: pmysql.PoolConnection
+        _conn?: pmysql.PoolConnection,
+        camelCase:boolean=true
     ) {
+        this.sqlGen.camelCase = camelCase
         this.conn = _conn
     }
 
@@ -70,7 +75,7 @@ export class Dao {
      * @param obj 
      * @param extra 
      */
-    async add<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
+    async add<T>(tbName: string, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
         if (!tbName) {
             throw 'tbName必须提供'
         }
@@ -91,7 +96,7 @@ export class Dao {
      * @param obj 
      * @param extra 
      */
-    async addInv<T>(tbName: String, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
+    async addInv<T>(tbName: string, obj?: Partial<T>, extra?: SqlExtra): Promise<{ data: T, fields, query }> {
         // _.isObject(objs) && (objs=[objs])
         // let insObjs = objs.map(obj => _.omitBy(obj, o=>_.isNil(o)));
         const insObj = _.omitBy(obj, o => _.isNil(o)) as Partial<T>
@@ -100,11 +105,11 @@ export class Dao {
     }
 
     
-    async update<T>(tbName: String, obj?: Partial<T>, extra?:SqlExtra){
+    async update<T>(tbName: string, obj?: Partial<T>, extra?:SqlExtra){
         let {sql, params} = this.sqlGen.genUpdate(tbName, obj, extra)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
-        return data.affectedRows
+        return <number>data.affectedRows
     }
 
     /**
@@ -112,7 +117,7 @@ export class Dao {
      * @param tbName 
      * @param id 
      */
-    async sDelete(tbName:String, id:String){
+    async sDelete(tbName:string, id:String){
         let {sql, params} = this.sqlGen.genUpdate(tbName, {sDelField:null}, {where:{o:{[identityField]:id}}})
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
@@ -124,7 +129,7 @@ export class Dao {
      * @param tbName 
      * @param extra 
      */
-    async sDeleteBy(tbName:String, extra:SqlExtra){
+    async sDeleteBy(tbName:string, extra:SqlExtra){
         let {sql, params} = this.sqlGen.genUpdate(tbName, {sDelField:null}, extra)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
@@ -136,7 +141,7 @@ export class Dao {
      * @param tbName 
      * @param id 
      */
-    async delete(tbName:String, id:String){
+    async delete(tbName:string, id:String){
         let {sql, params} = this.sqlGen.genDelete(tbName, {where:{o:{[identityField]:id}}})
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
@@ -148,7 +153,7 @@ export class Dao {
      * @param tbName 
      * @param extra 
      */
-    async deleteBy(tbName:String, extra:SqlExtra){
+    async deleteBy(tbName:string, extra:SqlExtra){
         let {sql, params} = this.sqlGen.genDelete(tbName, extra)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
@@ -162,25 +167,25 @@ export class Dao {
      * @param obj 
      * @param extra 
      */
-    async updateInv<T>(tbName: String, obj?: Partial<T>, extra?:SqlExtra){
+    async updateInv<T>(tbName: string, obj?: Partial<T>, extra?:SqlExtra){
         const updObj = _.omitBy(obj, o => _.isNil(o)) as Partial<T>
         let ret = await this.update(tbName, updObj, extra)
         return ret
     }
 
     
-    async get(tbName: String, id:string, field:Array<string>=['*'],showExtraField=false){
+    async get(tbName: string, id:string, field:Array<string>=['*'],showExtraField=false){
         let {sql, params} = this.sqlGen.genGetById(tbName,id,field,showExtraField)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
         return data
     }
 
-    async getBy(tbName: String, obj:any, field:Array<string>=['*'],showExtraField=false){
+    async getBy<T>(tbName: string, obj: Partial<T>, field:Array<string>=['*'],showExtraField=false){
         let {sql, params} = this.sqlGen.genGetByWhereObj(tbName,obj,field,showExtraField)
         let conn = await this.getConn()
         let [data] = await conn.query(sql, params)
-        return data
+        return <T[]>data
     }
 
 
@@ -192,7 +197,7 @@ export class Dao {
      * @param extra 
      * @param nestTables 
      */
-    async list(tbName: String|UseJoin, _extra?: SqlExtra, nestTables?:undefined|boolean|string): Promise<{ data, cnt:number}> {
+    async list(tbName: string|UseJoin, _extra?: SqlExtra, nestTables?:undefined|boolean|string): Promise<{ data, cnt:number}> {
         if (!tbName || !tbName.length) {
             throw 'tbName必须提供'
         }
@@ -228,7 +233,7 @@ export class Dao {
      * @param field 字段列表
      * @param extra 扩展查询
      */
-    async listWsd(tbName: String|UseJoin, extra?: SqlExtra): Promise<{ data, cnt:number }> {
+    async listWsd(tbName: string|UseJoin, extra?: SqlExtra): Promise<{ data, cnt:number }> {
         extra = _.mergeWith(extra, {
             where:{
                 cdm:[{

@@ -1,6 +1,6 @@
 import { actionLog } from "./actionLog"
 import * as cors from "./cors";
-import errorHandler from "./error";
+import errorHandler,{i18nError} from "./error";
 import redisMid from "./redis";
 import transDao from "./transDao";
 import { signMethod, jwtVerify, scodeVerify } from "./verify";
@@ -21,18 +21,21 @@ const test3 = (...args)=>async (ctx, next)=>{
 
 
 export const all = {
-    actionLog,
-    cors,
-    errorHandler,
+    // actionLog,
+    // cors,
+    // errorHandler,
+    // i18nError,
+    // signMethod,
     redisMid,
     transDao,
-    signMethod,
     jwtVerify,
     scodeVerify,
     test1,
     test2,
     test3,
 }
+
+
 
 // .reduce((result, item, index, array) => {
 //     result[index] = item; //a, b, c
@@ -45,6 +48,7 @@ export {
     actionLog,
     cors,
     errorHandler,
+    i18nError,
     redisMid,
     transDao,
     signMethod,
